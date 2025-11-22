@@ -33,14 +33,11 @@ export default function Calendar() {
             <div className="grid flex-auto grid-cols-1 grid-rows-1">
               {/* Horizontal lines */}
               <div
-                style={{ gridTemplateRows: 'repeat(32, minmax(1fr))' }}
+                style={{ gridTemplateRows: 'repeat(32, 1fr)' }}
                 className="col-start-1 col-end-2 row-start-1 grid divide-y divide-gray-100"
               >
-                <div className="row-end-1 h-7" />
                 <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    7AM
-                  </div>
+                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400"></div>
                 </div>
                 <div />
                 <div>
