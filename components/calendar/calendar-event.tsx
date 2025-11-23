@@ -239,12 +239,12 @@ function CalendarEvent({
     Th: 4,
     F: 5,
   };
-  const formatTime = (time: number) => time % 12;
+  const formatTime = (time: number) => (time % 12 === 0 ? 12 : time % 12);
   const meridiem = (hour: number) => (hour % 12 > 0 ? 'PM' : 'AM');
 
   const timeToRow = (time: TimeType): number => {
     const totalMinutes = (time.hour - 7) * 60 + time.minute;
-    return Math.floor(totalMinutes / 10) + 1;
+    return Math.floor(totalMinutes / 5) + 1;
   };
 
   // Pre-written class strings so Tailwind can detect them during static analysis
@@ -270,7 +270,9 @@ function CalendarEvent({
           <time dateTime="2022-01-12T07:30">
             {formatTime(startTime.hour)}:
             {startTime.minute.toString().padStart(2, '0')}{' '}
-            {meridiem(startTime.hour)}
+            {meridiem(startTime.hour)} - {formatTime(endTime.hour)}:
+            {endTime.minute.toString().padStart(2, '0')}{' '}
+            {meridiem(endTime.hour)}
           </time>
         </p>
       </a>
