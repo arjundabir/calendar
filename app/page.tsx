@@ -1,4 +1,6 @@
 import Calendar from '@/components/calendar/calendar';
+import CalendarTabs from '@/components/calendar/calendar-tabs';
+import { ChevronDownIcon } from '@heroicons/react/16/solid';
 
 export default function Home() {
   return (
@@ -7,7 +9,7 @@ export default function Home() {
         <Calendar />
       </section>
       <section className="">
-        <div>hello world</div>
+        <CalendarTabs />
       </section>
     </div>
   );

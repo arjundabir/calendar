@@ -1,4 +1,4 @@
-import { CalendarList } from './calendar-event';
+import { CalendarEvent, CalendarList } from './calendar-event';
 
 export default function Calendar() {
   return (
@@ -8,7 +8,7 @@ export default function Calendar() {
           style={{ width: '165%' }}
           className="flex max-w-full flex-none flex-col h-full"
         >
-          <div className="sticky top-0 z-30 flex-none bg-white shadow-sm ring-1 ring-black/5">
+          <div className="sticky top-0 z-30 flex-none bg-white shadow ring-1 ring-black/5">
             <div className="grid grid-cols-5 divide-x divide-gray-100 border-r border-gray-100 text-sm/6 text-gray-500 ">
               <div className="col-end-1 w-14 ml-px" />
               <div className="flex items-center justify-center py-3">
@@ -36,100 +36,31 @@ export default function Calendar() {
                 style={{ gridTemplateRows: 'repeat(32, 1fr)' }}
                 className="col-start-1 col-end-2 row-start-1 grid divide-y divide-gray-100"
               >
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400"></div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    8AM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    9AM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    10AM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    11AM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    12PM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    1PM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    2PM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    3PM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    4PM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    5PM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    6PM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    7PM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    8PM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    9PM
-                  </div>
-                </div>
-                <div />
-                <div>
-                  <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
-                    10PM
-                  </div>
-                </div>
-                <div />
+                {[
+                  '',
+                  '8AM',
+                  '9AM',
+                  '10AM',
+                  '11AM',
+                  '12PM',
+                  '1PM',
+                  '2PM',
+                  '3PM',
+                  '4PM',
+                  '5PM',
+                  '6PM',
+                  '7PM',
+                  '8PM',
+                  '9PM',
+                  '10PM',
+                ].flatMap((time, index) => [
+                  <div key={`label-${index}`}>
+                    <div className="sticky left-0 z-20 -mt-2.5 -ml-14 w-14 pr-2 text-right text-xs/5 text-gray-400">
+                      {time}
+                    </div>
+                  </div>,
+                  <div key={`spacer-${index}`} />,
+                ])}
               </div>
 
               {/* Vertical lines */}
@@ -143,38 +74,35 @@ export default function Calendar() {
 
               {/* Events */}
               <CalendarList>
-                <li
-                  style={{ gridRow: '8 / span 30' }}
-                  className="relative flex col-start-3"
-                >
-                  <a
-                    href="#"
-                    className="group inset-px absolute flex flex-col overflow-y-auto rounded-lg bg-pink-50 p-2 text-xs/5 hover:bg-pink-100"
-                  >
-                    <p className="order-1 font-semibold text-pink-700">
-                      Flight to Paris
-                    </p>
-                    <p className="text-pink-500 group-hover:text-pink-700">
-                      <time dateTime="2022-01-12T07:30">7:30 AM</time>
-                    </p>
-                  </a>
-                </li>
-                <li
-                  style={{ gridRow: '38 / span 24' }}
-                  className="relative my-px flex col-start-5"
-                >
-                  <a
-                    href="#"
-                    className="group absolute inset-px flex flex-col overflow-y-auto rounded-lg bg-gray-100 p-2 text-xs/5 hover:bg-gray-200"
-                  >
-                    <p className="order-1 font-semibold text-gray-700">
-                      Meeting with design team at Disney
-                    </p>
-                    <p className="text-gray-500 group-hover:text-gray-700">
-                      <time dateTime="2022-01-15T10:00">10:00 AM</time>
-                    </p>
-                  </a>
-                </li>
+                <CalendarEvent
+                  dayOfWeek="M"
+                  startTime={{ hour: 7, minute: 30 }}
+                  endTime={{ hour: 10, minute: 30 }}
+                  color="pink"
+                  title="Flight to Paris"
+                />
+
+                <CalendarEvent
+                  dayOfWeek="W"
+                  startTime={{ hour: 9, minute: 0 }}
+                  endTime={{ hour: 10, minute: 30 }}
+                  color="green"
+                  title="Team Standup"
+                />
+                <CalendarEvent
+                  dayOfWeek="T"
+                  startTime={{ hour: 14, minute: 0 }}
+                  endTime={{ hour: 15, minute: 30 }}
+                  color="blue"
+                  title="Client Presentation"
+                />
+                <CalendarEvent
+                  dayOfWeek="F"
+                  startTime={{ hour: 11, minute: 0 }}
+                  endTime={{ hour: 12, minute: 0 }}
+                  color="green"
+                  title="Lunch Meeting"
+                />
               </CalendarList>
             </div>
           </div>
