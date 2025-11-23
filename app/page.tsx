@@ -3,7 +3,7 @@ import CalendarTabs from '@/components/calendar/calendar-tabs';
 import SearchInput from '@/components/calendar/search-input';
 import { TabProvider } from '@/components/calendar/tab-context';
 
-export default function Home() {
+export default async function Home() {
   return (
     <div className="grid grid-cols-2 h-screen">
       <section className="border-r border-gray-100">
