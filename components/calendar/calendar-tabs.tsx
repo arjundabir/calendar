@@ -38,7 +38,7 @@ export default function CalendarTabs() {
                 aria-current={tab.current ? 'page' : undefined}
                 className={classNames(
                   tab.current
-                    ? 'text-indigo-600 shadow-[inset_0_-2px_0_0_rgb(99,102,241)]'
+                    ? 'text-black shadow-[inset_0_-2px_0_0_var(--color-black)]'
                     : 'text-sm/6 text-gray-500 shadow-[inset_0_-2px_0_0_transparent] hover:shadow-[inset_0_-2px_0_0_rgb(209,213,219)] hover:text-gray-700',
                   'grow px-1 py-3 text-center text-sm font-medium cursor-pointer'
                 )}
