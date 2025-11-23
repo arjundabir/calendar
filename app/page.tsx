@@ -1,6 +1,7 @@
 import Calendar from '@/components/calendar/calendar';
 import CalendarTabs from '@/components/calendar/calendar-tabs';
-import { ChevronDownIcon } from '@heroicons/react/16/solid';
+import SearchInput from '@/components/calendar/search-input';
+import { TabProvider } from '@/components/calendar/tab-context';
 
 export default function Home() {
   return (
@@ -8,8 +9,13 @@ export default function Home() {
       <section className="border-r border-gray-100">
         <Calendar />
       </section>
-      <section className="">
-        <CalendarTabs />
+      <section>
+        <TabProvider>
+          <CalendarTabs />
+          <div className="p-4">
+            <SearchInput />
+          </div>
+        </TabProvider>
       </section>
     </div>
   );

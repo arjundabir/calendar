@@ -1,26 +1,12 @@
 'use client';
-import { ChevronDownIcon } from '@heroicons/react/16/solid';
-import { useState } from 'react';
+import { useTabContext } from './tab-context';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
 
 export default function CalendarTabs() {
-  const [tabs, setTabs] = useState([
-    { name: 'Search', href: 'search', current: true },
-    { name: 'Added', href: 'added', current: false },
-    //TODO: @arjundabir add this { name: 'Map', href: 'map', current: true },
-  ]);
-  // Fix: refactor tab handling so both select and links control and reflect active tab state properly
-  function handleTabChange(selectedTabName: string) {
-    setTabs((prevTabs) =>
-      prevTabs.map((tab) => ({
-        ...tab,
-        current: tab.name === selectedTabName,
-      }))
-    );
-  }
+  const { tabs, handleTabChange } = useTabContext();
 
   return (
     <div>
