@@ -71,6 +71,10 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
     setWebSocData(response);
   }
 
+  function addToCalendar(): void {
+    throw new Error('Function not implemented.');
+  }
+
   return (
     <div>
       <form className="flex gap-1" onSubmit={handleSubmit(onSubmit)}>
@@ -208,7 +212,10 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                 )}
                                 <TableRow>
                                   <TableCell className="px-0!">
-                                    <Button plain>
+                                    <Button
+                                      plain
+                                      onClick={() => addToCalendar()}
+                                    >
                                       <PlusIcon className="size-4" />
                                     </Button>
                                   </TableCell>
