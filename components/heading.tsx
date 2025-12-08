@@ -9,6 +9,7 @@ export function Heading({ className, level = 1, ...props }: HeadingProps) {
   const Element = `h${level}` as keyof JSX.IntrinsicElements;
 
   return (
+    // @ts-expect-error tailwind component library
     <Element
       {...props}
       className={clsx(
@@ -23,6 +24,7 @@ export function Subheading({ className, level = 2, ...props }: HeadingProps) {
   const Element = `h${level}` as keyof JSX.IntrinsicElements;
 
   return (
+    // @ts-expect-error tailwind component library
     <Element
       {...props}
       className={clsx(
