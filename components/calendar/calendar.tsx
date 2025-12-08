@@ -1,6 +1,13 @@
-import { CalendarEvent, CalendarList } from './calendar-event';
+'use client';
+
+import { transformCalendarEvents } from '@/lib/calendar/calendar-events-helper';
+import { CalendarList } from './calendar-event';
+import { useCalendarContext } from './calendar-provider';
 
 export default function Calendar() {
+  const { calendarEvents } = useCalendarContext();
+  const transformedEvents = transformCalendarEvents(calendarEvents);
+
   return (
     <div className="flex h-full flex-col">
       <div className="isolate flex flex-auto flex-col bg-white">
@@ -73,37 +80,7 @@ export default function Calendar() {
               </div>
 
               {/* Events */}
-              <CalendarList>
-                <CalendarEvent
-                  dayOfWeek="M"
-                  startTime={{ hour: 7, minute: 30 }}
-                  endTime={{ hour: 10, minute: 30 }}
-                  color="pink"
-                  title="Flight to Paris"
-                />
-
-                <CalendarEvent
-                  dayOfWeek="W"
-                  startTime={{ hour: 9, minute: 0 }}
-                  endTime={{ hour: 10, minute: 30 }}
-                  color="green"
-                  title="Team Standup"
-                />
-                <CalendarEvent
-                  dayOfWeek="T"
-                  startTime={{ hour: 14, minute: 0 }}
-                  endTime={{ hour: 15, minute: 30 }}
-                  color="blue"
-                  title="Client Presentation"
-                />
-                <CalendarEvent
-                  dayOfWeek="F"
-                  startTime={{ hour: 11, minute: 0 }}
-                  endTime={{ hour: 12, minute: 0 }}
-                  color="green"
-                  title="Lunch Meeting"
-                />
-              </CalendarList>
+              <CalendarList>{transformedEvents}</CalendarList>
             </div>
           </div>
         </div>

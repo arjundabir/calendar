@@ -3,7 +3,12 @@
 import { Select } from '@/components/select';
 import { Button } from '../button';
 import { Input } from '../input';
-import { QueryWebSocParams, Term, WebSocQuerySuccess } from '@/types/websoc';
+import {
+  QueryWebSocParams,
+  SectionSchema,
+  Term,
+  WebSocQuerySuccess,
+} from '@/types/websoc';
 import z from 'zod';
 import { useForm } from 'react-hook-form';
 import { queryWebSoc } from '@/app/actions';
@@ -16,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '../table';
-import { PlusIcon } from '@heroicons/react/24/solid';
+import { MinusIcon, PlusIcon } from '@heroicons/react/24/solid';
 import { Heading, Subheading } from '../heading';
 import { Strong, Text, TextLink } from '../text';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -26,6 +31,7 @@ import {
   AccordionGroup,
   AccordionPanel,
 } from '../accordion';
+import { useCalendarContext } from './calendar-provider';
 
 const searchCourseSchema = z.object({
   term: z.string(),
@@ -37,6 +43,8 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
   const [webSocData, setWebSocData] = useState<
     WebSocQuerySuccess['data'] | null
   >(null);
+  const { calendarEvents, setCalendarEvents, removeCalendarEvent } =
+    useCalendarContext();
 
   const initialValues: SearchCourseType = {
     term: websocTerms[0].shortName,
@@ -71,8 +79,12 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
     setWebSocData(response);
   }
 
-  function addToCalendar(): void {
-    throw new Error('Function not implemented.');
+  function sectionAdded(
+    sectionCode: z.infer<typeof SectionSchema>['sectionCode']
+  ) {
+    return calendarEvents.some(
+      (calendarEvent) => calendarEvent.sectionCode === sectionCode
+    );
   }
 
   return (
@@ -212,12 +224,37 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                 )}
                                 <TableRow>
                                   <TableCell className="px-0!">
-                                    <Button
-                                      plain
-                                      onClick={() => addToCalendar()}
-                                    >
-                                      <PlusIcon className="size-4" />
-                                    </Button>
+                                    {sectionAdded(section.sectionCode) ? (
+                                      <Button
+                                        type="button"
+                                        plain
+                                        onClick={() =>
+                                          removeCalendarEvent(
+                                            section.sectionCode
+                                          )
+                                        }
+                                      >
+                                        <MinusIcon className="size-4" />
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        type="button"
+                                        plain
+                                        onClick={() => {
+                                          const calendarEvent = {
+                                            ...section,
+                                            deptCode: course.deptCode,
+                                            deptName: department.deptName,
+                                          };
+                                          setCalendarEvents([
+                                            ...calendarEvents,
+                                            calendarEvent,
+                                          ]);
+                                        }}
+                                      >
+                                        <PlusIcon className="size-4" />
+                                      </Button>
+                                    )}
                                   </TableCell>
                                   <TableCell>{section.sectionCode}</TableCell>
                                   <TableCell className="grid grid-rows-3">
