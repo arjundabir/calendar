@@ -244,6 +244,7 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                           const calendarEvent = {
                                             ...section,
                                             deptCode: course.deptCode,
+                                            courseNumber: course.courseNumber,
                                             deptName: department.deptName,
                                           };
                                           setCalendarEvents([

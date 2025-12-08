@@ -115,7 +115,7 @@ function transformCalendarEvents(calendarEvents: CalendarEvents[]) {
   const events: ReactElement[] = [];
 
   calendarEvents.forEach((calendarEvent, eventIndex) => {
-    const title = `${calendarEvent.deptCode} ${calendarEvent.sectionCode}`;
+    const title = `${calendarEvent.deptCode} ${calendarEvent.courseNumber}`;
     const color = getColorForDept(calendarEvent.deptCode);
 
     calendarEvent.meetings.forEach((meeting, meetingIndex) => {

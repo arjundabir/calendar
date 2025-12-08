@@ -6,7 +6,8 @@ import { Section, Course, DepartmentInSchool } from '@/types/websoc';
 export interface CalendarEvents
   extends Section,
     Pick<Course, 'deptCode'>,
-    Pick<DepartmentInSchool, 'deptName'> {}
+    Pick<DepartmentInSchool, 'deptName'>,
+    Pick<Course, 'courseNumber'> {}
 
 type CalendarContextType = {
   calendarEvents: CalendarEvents[] | [];
