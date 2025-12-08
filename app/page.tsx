@@ -11,10 +11,10 @@ export default async function Home() {
       <section className="border-r border-gray-100">
         <Calendar />
       </section>
-      <section>
+      <section className="h-full overflow-y-auto">
         <TabProvider>
           <CalendarTabs />
-          <div className="p-4">
+          <div className="flex-1 overflow-y-auto p-4">
             <SearchForm websocTerms={websocTerms} />
           </div>
         </TabProvider>
