@@ -1,9 +1,11 @@
 import Calendar from '@/components/calendar/calendar';
 import CalendarTabs from '@/components/calendar/calendar-tabs';
-import SearchInput from '@/components/calendar/search-input';
+import SearchForm from '@/components/calendar/search-form';
 import { TabProvider } from '@/components/calendar/tab-context';
+import { getWebSocTerms } from './actions';
 
 export default async function Home() {
+  const websocTerms = await getWebSocTerms();
   return (
     <div className="grid grid-cols-2 h-screen">
       <section className="border-r border-gray-100">
@@ -13,7 +15,7 @@ export default async function Home() {
         <TabProvider>
           <CalendarTabs />
           <div className="p-4">
-            <SearchInput />
+            <SearchForm websocTerms={websocTerms} />
           </div>
         </TabProvider>
       </section>

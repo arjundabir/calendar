@@ -47,22 +47,131 @@ export const WebSocDepartmentsResponseSchema = z.discriminatedUnion('ok', [
 // ============================================================================
 // Query WebSoc Endpoint Schemas
 // ============================================================================
-// Note: Using z.any() for truncated fields marked as "[Max Depth Exceeded]"
-// You can expand these schemas later with actual structures if needed
-export const SectionSchema = z
-  .object({
-    units: z.string(),
-    status: z.any(), // "[Max Depth Exceeded]" - expand later
-    meetings: z.array(z.any()), // "[Max Depth Exceeded]" - expand later
-    finalExam: z.any(), // "[Max Depth Exceeded]" - expand later
-    sectionNum: z.string(),
-    instructors: z.array(z.any()), // "[Max Depth Exceeded]" - expand later
-    maxCapacity: z.string(),
-    sectionCode: z.string(),
-    sectionType: z.string(),
-    numRequested: z.string(),
-  })
-  .passthrough(); // Allow additional properties
+export interface QueryWebSocParams {
+  year: string; // Required
+  quarter: 'Fall' | 'Winter' | 'Spring' | 'Summer1' | 'Summer10wk' | 'Summer2'; // Required
+  ge?: string; // enum: ANY, GE-1A, GE-1B, GE-2, GE-3, etc.
+  department?: string;
+  courseTitle?: string;
+  courseNumber?: string;
+  sectionCodes?: string; // Comma-separated list of section codes or ranges
+  instructorName?: string; // Case-insensitive
+  days?: string;
+  building?: string;
+  room?: string;
+  division?: 'LowerDiv' | 'UpperDiv' | 'Graduate';
+  sectionType?:
+    | 'ANY'
+    | 'Act'
+    | 'Col'
+    | 'Dis'
+    | 'Fld'
+    | 'Lab'
+    | 'Lec'
+    | 'Qiz'
+    | 'Res'
+    | 'Sem'
+    | 'Stu'
+    | 'Tap'
+    | 'Tut';
+  fullCourses?:
+    | 'ANY'
+    | 'SkipFull'
+    | 'SkipFullWaitlist'
+    | 'FullOnly'
+    | 'Overenrolled';
+  cancelledCourses?: 'Exclude' | 'Include' | 'Only';
+  units?: 'VAR';
+  startTime?: string; // Pattern: ^(\d{1,2}):(\d{2})([ap]m?)?$
+  endTime?: string; // Pattern: ^(\d{1,2}):(\d{2})([ap]m?)?$
+  excludeRestrictionCodes?: string;
+  includeRelatedCourses?: string | null;
+}
+
+// Time object schema for meetings and final exams
+const TimeSchema = z.object({
+  hour: z.number(),
+  minute: z.number(),
+});
+
+// Meeting schema - can be TBA or scheduled
+const MeetingSchema = z.discriminatedUnion('timeIsTBA', [
+  z.object({
+    timeIsTBA: z.literal(true),
+  }),
+  z.object({
+    timeIsTBA: z.literal(false),
+    bldg: z.array(z.string()),
+    days: z.string(),
+    startTime: TimeSchema,
+    endTime: TimeSchema,
+  }),
+]);
+
+// Final exam schema - can be NO_FINAL, TBA_FINAL, or SCHEDULED_FINAL
+const FinalExamSchema = z.discriminatedUnion('examStatus', [
+  z.object({
+    examStatus: z.literal('NO_FINAL'),
+  }),
+  z.object({
+    examStatus: z.literal('TBA_FINAL'),
+  }),
+  z.object({
+    examStatus: z.literal('SCHEDULED_FINAL'),
+    dayOfWeek: z.string(),
+    month: z.number(),
+    day: z.number(),
+    startTime: TimeSchema,
+    endTime: TimeSchema,
+    bldg: z.array(z.string()),
+  }),
+]);
+
+// Status enum for sections
+const SectionStatusSchema = z.union([
+  z.enum(['OPEN', 'Waitl', 'FULL', 'NewOnly']),
+  z.literal(''),
+]);
+
+// Section type enum
+const SectionTypeEnumSchema = z.enum([
+  'Act',
+  'Col',
+  'Dis',
+  'Fld',
+  'Lab',
+  'Lec',
+  'Qiz',
+  'Res',
+  'Sem',
+  'Stu',
+  'Tap',
+  'Tut',
+]);
+
+export const SectionSchema = z.object({
+  units: z.string(),
+  status: SectionStatusSchema,
+  meetings: z.array(MeetingSchema),
+  finalExam: FinalExamSchema,
+  sectionNum: z.string(),
+  instructors: z.array(z.string()),
+  maxCapacity: z.string(),
+  sectionCode: z.string(),
+  sectionType: SectionTypeEnumSchema,
+  numRequested: z.string(),
+  restrictions: z.string(),
+  numOnWaitlist: z.string(),
+  numWaitlistCap: z.string(),
+  sectionComment: z.string(),
+  numNewOnlyReserved: z.string(),
+  numCurrentlyEnrolled: z.object({
+    totalEnrolled: z.string(),
+    sectionEnrolled: z.string(),
+  }),
+  updatedAt: z.nullable(z.string()),
+  webURL: z.string(),
+});
 
 export const CourseSchema = z.object({
   sections: z.array(SectionSchema),
