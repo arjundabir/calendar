@@ -66,8 +66,8 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
 
     const [year, quarter] = validSchema.data.term.split(' ');
     const courseList = validSchema.data.course.split(' ');
-    const courseNumber = courseList.pop();
-    const department = courseList.join(' ');
+    const courseNumber = courseList.pop()?.toUpperCase();
+    const department = courseList.join(' ').toUpperCase();
 
     const response = await queryWebSoc({
       year,
@@ -75,7 +75,6 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
       department,
       courseNumber,
     });
-    console.log(response);
     setWebSocData(response);
   }
 
@@ -218,7 +217,9 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                 {section?.sectionComment && (
                                   <TableRow className="col-span-full">
                                     <TableCell colSpan={11}>
-                                      {section.sectionComment}
+                                      <Text caption>
+                                        {section.sectionComment}
+                                      </Text>
                                     </TableCell>
                                   </TableRow>
                                 )}
@@ -257,7 +258,19 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                       </Button>
                                     )}
                                   </TableCell>
-                                  <TableCell>{section.sectionCode}</TableCell>
+                                  <TableCell>
+                                    <Button plain>
+                                      <Text
+                                        onClick={() =>
+                                          navigator.clipboard.writeText(
+                                            section.sectionCode
+                                          )
+                                        }
+                                      >
+                                        {section.sectionCode}
+                                      </Text>
+                                    </Button>
+                                  </TableCell>
                                   <TableCell className="grid grid-rows-3">
                                     <Strong caption>
                                       {section.sectionType}
@@ -271,7 +284,7 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                   </TableCell>
                                   <TableCell>
                                     {section.instructors.map((instructor) => (
-                                      <Strong key={instructor}>
+                                      <Strong key={instructor} caption>
                                         {instructor}
                                       </Strong>
                                     ))}
@@ -279,7 +292,11 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                   <TableCell>
                                     {section.meetings.map((meeting, idx) => {
                                       if (meeting.timeIsTBA) {
-                                        return <Text key={idx}>TBA</Text>;
+                                        return (
+                                          <Text key={idx} caption>
+                                            TBA
+                                          </Text>
+                                        );
                                       }
                                       // Create Date objects with the time (date doesn't matter)
                                       const startDate = new Date();
@@ -297,7 +314,7 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                         0
                                       );
                                       return (
-                                        <Strong key={idx}>
+                                        <Strong key={idx} caption>
                                           {format(startDate, 'h:mm a')}-
                                           {format(endDate, 'h:mm a')}
                                         </Strong>
@@ -328,10 +345,14 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                   </TableCell>
                                   <TableCell>
                                     <TextLink href={course.prerequisiteLink}>
-                                      {section.restrictions}
+                                      <Text caption>
+                                        {section.restrictions}
+                                      </Text>
                                     </TextLink>
                                   </TableCell>
-                                  <TableCell>{section.status}</TableCell>
+                                  <TableCell>
+                                    <Text caption>{section.status}</Text>
+                                  </TableCell>
                                 </TableRow>
                               </Fragment>
                             ))}
