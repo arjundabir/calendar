@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dev:db": "pnpx convex dev",
+    "deploy:db": "pnpx convex deploy"
   },
   "dependencies": {
     "@auth/core": "0.37.0",
