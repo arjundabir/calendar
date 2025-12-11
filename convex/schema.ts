@@ -1,9 +1,10 @@
-import { defineSchema } from "convex/server";
+import { defineSchema, defineTable } from "convex/server";
 import { authTables } from "@convex-dev/auth/server";
+import { calendarEventValidator } from "./calendar";
  
 const schema = defineSchema({
   ...authTables,
-  // Your other tables...
+  calendarEvents: defineTable(calendarEventValidator),
 });
  
 export default schema;
