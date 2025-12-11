@@ -3,10 +3,28 @@
 import { transformCalendarEvents } from '@/lib/calendar/calendar-events-helper';
 import { CalendarList } from './calendar-event';
 import { useCalendarContext } from './calendar-provider';
+import { Authenticated, Unauthenticated, useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { useUser } from '@clerk/nextjs';
 
 export default function Calendar() {
   const { calendarEvents } = useCalendarContext();
+  const { user, isSignedIn } = useUser();
+
+  const dbCalendarEvents = useQuery(
+    api.calendar.getUserEvents,
+    isSignedIn
+      ? {
+          userId: user?.id,
+        }
+      : 'skip'
+  );
+
+  const dbCalendarEventsNoUserId =
+    dbCalendarEvents?.map(({ userId: _, ...rest }) => rest) ?? [];
+
   const transformedEvents = transformCalendarEvents(calendarEvents);
+  const transformedDbEvents = transformCalendarEvents(dbCalendarEventsNoUserId);
 
   return (
     <div className="flex h-full flex-col">
@@ -80,7 +98,10 @@ export default function Calendar() {
               </div>
 
               {/* Events */}
-              <CalendarList>{transformedEvents}</CalendarList>
+              <CalendarList>
+                <Authenticated>{transformedDbEvents}</Authenticated>
+                <Unauthenticated>{transformedEvents}</Unauthenticated>
+              </CalendarList>
             </div>
           </div>
         </div>

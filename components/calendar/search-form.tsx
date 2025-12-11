@@ -32,6 +32,14 @@ import {
   AccordionPanel,
 } from '../accordion';
 import { useCalendarContext } from './calendar-provider';
+import {
+  Authenticated,
+  Unauthenticated,
+  useMutation,
+  useQuery,
+} from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import { useUser } from '@clerk/nextjs';
 
 const searchCourseSchema = z.object({
   term: z.string(),
@@ -43,6 +51,8 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
   const [webSocData, setWebSocData] = useState<
     WebSocQuerySuccess['data'] | null
   >(null);
+
+  const { user, isSignedIn } = useUser();
   const { calendarEvents, setCalendarEvents, removeCalendarEvent } =
     useCalendarContext();
 
@@ -85,6 +95,13 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
       (calendarEvent) => calendarEvent.sectionCode === sectionCode
     );
   }
+
+  const addToCalendarDb = useMutation(api.calendar.createCalendarEvent);
+  const deleteCalendarEvent = useMutation(api.calendar.deleteCalendarEvent);
+  const getCalendarEvents = useQuery(
+    api.calendar.getUserEvents,
+    isSignedIn ? { userId: user.id } : 'skip'
+  );
 
   return (
     <div>
@@ -224,40 +241,113 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                   </TableRow>
                                 )}
                                 <TableRow>
-                                  <TableCell className="px-0!">
-                                    {sectionAdded(section.sectionCode) ? (
-                                      <Button
-                                        type="button"
-                                        plain
-                                        onClick={() =>
-                                          removeCalendarEvent(
-                                            section.sectionCode
-                                          )
-                                        }
-                                      >
-                                        <MinusIcon className="size-4" />
-                                      </Button>
-                                    ) : (
-                                      <Button
-                                        type="button"
-                                        plain
-                                        onClick={() => {
-                                          const calendarEvent = {
-                                            ...section,
-                                            deptCode: course.deptCode,
-                                            courseNumber: course.courseNumber,
-                                            deptName: department.deptName,
-                                          };
-                                          setCalendarEvents([
-                                            ...calendarEvents,
-                                            calendarEvent,
-                                          ]);
-                                        }}
-                                      >
-                                        <PlusIcon className="size-4" />
-                                      </Button>
-                                    )}
-                                  </TableCell>
+                                  <Authenticated>
+                                    <TableCell className="px-0!">
+                                      {getCalendarEvents?.some(
+                                        (calendarEvent) =>
+                                          calendarEvent.sectionCode ===
+                                          section.sectionCode
+                                      ) ? (
+                                        <Button
+                                          type="button"
+                                          plain
+                                          onClick={() => {
+                                            if (isSignedIn) {
+                                              deleteCalendarEvent({
+                                                sectionCode:
+                                                  section.sectionCode,
+                                              });
+                                            } else {
+                                              removeCalendarEvent(
+                                                section.sectionCode
+                                              );
+                                            }
+                                          }}
+                                        >
+                                          <MinusIcon className="size-4" />
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          type="button"
+                                          plain
+                                          onClick={() => {
+                                            const calendarEvent = {
+                                              ...section,
+                                              deptCode: course.deptCode,
+                                              courseNumber: course.courseNumber,
+                                              deptName: department.deptName,
+                                            };
+                                            if (isSignedIn) {
+                                              const calendarEventWithUserId = {
+                                                ...calendarEvent,
+                                                userId: user.id,
+                                              };
+                                              addToCalendarDb({
+                                                event: calendarEventWithUserId,
+                                              });
+                                            }
+                                          }}
+                                        >
+                                          <PlusIcon className="size-4" />
+                                        </Button>
+                                      )}
+                                    </TableCell>
+                                  </Authenticated>
+                                  <Unauthenticated>
+                                    <TableCell className="px-0!">
+                                      {sectionAdded(section.sectionCode) ? (
+                                        <Button
+                                          type="button"
+                                          plain
+                                          onClick={() => {
+                                            // TODO: fix auth and unauth state later
+                                            if (isSignedIn) {
+                                              deleteCalendarEvent({
+                                                sectionCode:
+                                                  section.sectionCode,
+                                              });
+                                            } else {
+                                              removeCalendarEvent(
+                                                section.sectionCode
+                                              );
+                                            }
+                                          }}
+                                        >
+                                          <MinusIcon className="size-4" />
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          type="button"
+                                          plain
+                                          onClick={() => {
+                                            const calendarEvent = {
+                                              ...section,
+                                              deptCode: course.deptCode,
+                                              courseNumber: course.courseNumber,
+                                              deptName: department.deptName,
+                                            };
+                                            if (isSignedIn) {
+                                              const calendarEventWithUserId = {
+                                                ...calendarEvent,
+                                                userId: user.id,
+                                              };
+                                              addToCalendarDb({
+                                                event: calendarEventWithUserId,
+                                              });
+                                            } else {
+                                              setCalendarEvents([
+                                                ...calendarEvents,
+                                                calendarEvent,
+                                              ]);
+                                            }
+                                          }}
+                                        >
+                                          <PlusIcon className="size-4" />
+                                        </Button>
+                                      )}
+                                    </TableCell>
+                                  </Unauthenticated>
+
                                   <TableCell>
                                     <Button plain>
                                       <Text

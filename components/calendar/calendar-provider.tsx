@@ -6,9 +6,7 @@ import { Navbar, NavbarDivider, NavbarSection, NavbarSpacer } from '../navbar';
 import { Authenticated, AuthLoading, Unauthenticated } from 'convex/react';
 import { SignInButton, UserButton } from '@clerk/nextjs';
 import { Button } from '@/components/button';
-import Link from 'next/link';
 import { CalendarIcon } from '@heroicons/react/24/solid';
-import { Avatar } from '../avatar';
 
 export interface CalendarEvents
   extends Section,
@@ -60,7 +58,7 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
         <NavbarSection>
           <Unauthenticated>
             <SignInButton>
-              <Button color="dark">Sign up</Button>
+              <Button color="dark">Login / Sign up</Button>
             </SignInButton>
           </Unauthenticated>
           <Authenticated>
