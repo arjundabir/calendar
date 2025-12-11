@@ -40,7 +40,7 @@ function roundToNearest10(minute: number): number {
 
 // Helper function to get a color based on deptCode (for consistent coloring)
 function getColorForDept(
-  deptCode: string
+  sectionCode: string
 ):
   | 'red'
   | 'orange'
@@ -104,8 +104,8 @@ function getColorForDept(
 
   // Simple hash function to consistently assign colors
   let hash = 0;
-  for (let i = 0; i < deptCode.length; i++) {
-    hash = deptCode.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < sectionCode.length; i++) {
+    hash = sectionCode.charCodeAt(i) + ((hash << 5) - hash);
   }
   return colors[Math.abs(hash) % colors.length];
 }
@@ -116,7 +116,7 @@ function transformCalendarEvents(calendarEvents: CalendarEvents[]) {
 
   calendarEvents.forEach((calendarEvent, eventIndex) => {
     const title = `${calendarEvent.deptCode} ${calendarEvent.courseNumber}`;
-    const color = getColorForDept(calendarEvent.deptCode);
+    const color = getColorForDept(calendarEvent.sectionCode);
 
     calendarEvent.meetings.forEach((meeting, meetingIndex) => {
       // Skip TBA meetings
