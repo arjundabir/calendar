@@ -2,7 +2,13 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
 import { Section, Course, DepartmentInSchool } from '@/types/websoc';
-import { Navbar, NavbarDivider, NavbarSection, NavbarSpacer } from '../navbar';
+import {
+  Navbar,
+  NavbarDivider,
+  NavbarItem,
+  NavbarSection,
+  NavbarSpacer,
+} from '../navbar';
 import { Authenticated, AuthLoading, Unauthenticated } from 'convex/react';
 import { SignInButton, UserButton } from '@clerk/nextjs';
 import { Button } from '@/components/button';
@@ -51,9 +57,10 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     >
       <Navbar>
         <NavbarDivider />
-        <Button href="/" plain>
-          <CalendarIcon className="size-5" />
-        </Button>
+        <NavbarItem>
+          <CalendarIcon />
+          Calendar by Zotsites
+        </NavbarItem>
         <NavbarSpacer />
         <NavbarSection>
           <Unauthenticated>
