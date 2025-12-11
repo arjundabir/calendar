@@ -1,11 +1,24 @@
-import type React from 'react'
+'use client';
 
-export function AuthLayout({ children }: { children: React.ReactNode }) {
+import { ReactNode } from 'react';
+import { ConvexReactClient } from 'convex/react';
+import { ConvexProviderWithClerk } from 'convex/react-clerk';
+import { useAuth } from '@clerk/nextjs';
+
+if (!process.env.NEXT_PUBLIC_CONVEX_URL) {
+  throw new Error('Missing NEXT_PUBLIC_CONVEX_URL in your .env file');
+}
+
+const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL);
+
+export default function ConvexClientProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
-    <main className="flex min-h-dvh flex-col p-2">
-      <div className="flex grow items-center justify-center p-6 lg:rounded-lg lg:bg-white lg:p-10 lg:shadow-xs lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10">
-        {children}
-      </div>
-    </main>
-  )
+    <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+      {children}
+    </ConvexProviderWithClerk>
+  );
 }

@@ -2,6 +2,13 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
 import { Section, Course, DepartmentInSchool } from '@/types/websoc';
+import { Navbar, NavbarDivider, NavbarSection, NavbarSpacer } from '../navbar';
+import { Authenticated, AuthLoading, Unauthenticated } from 'convex/react';
+import { SignInButton, UserButton } from '@clerk/nextjs';
+import { Button } from '@/components/button';
+import Link from 'next/link';
+import { CalendarIcon } from '@heroicons/react/24/solid';
+import { Avatar } from '../avatar';
 
 export interface CalendarEvents
   extends Section,
@@ -44,6 +51,27 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     <CalendarContext.Provider
       value={{ calendarEvents, setCalendarEvents, removeCalendarEvent }}
     >
+      <Navbar>
+        <NavbarDivider />
+        <Button href="/" plain>
+          <CalendarIcon className="size-5" />
+        </Button>
+        <NavbarSpacer />
+        <NavbarSection>
+          <Unauthenticated>
+            <SignInButton>
+              <Button color="dark">Sign up</Button>
+            </SignInButton>
+          </Unauthenticated>
+          <Authenticated>
+            <UserButton />
+          </Authenticated>
+          <AuthLoading>
+            <p>Still loading</p>
+          </AuthLoading>
+          <NavbarDivider />
+        </NavbarSection>
+      </Navbar>
       {children}
     </CalendarContext.Provider>
   );
