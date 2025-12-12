@@ -101,7 +101,7 @@ export const createCalendarEvent = mutation({
 })
 
 export const getUserEvents = query({
-    handler: async (ctx,) => {
+    handler: async (ctx) => {
         const user = await ctx.auth.getUserIdentity()
         
         if(!user) return []

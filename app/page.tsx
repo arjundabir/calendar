@@ -4,21 +4,21 @@ import SearchForm from '@/components/calendar/search-form';
 import { TabProvider } from '@/components/calendar/tab-context';
 import { CalendarProvider } from '@/components/calendar/calendar-provider';
 import { getWebSocTerms } from './actions';
+import { AddedCourses } from '@/components/calendar/added-courses';
 
 export default async function Home() {
   const websocTerms = await getWebSocTerms();
   return (
     <CalendarProvider>
-      <div className="grid grid-cols-2 h-screen">
+      <div className="grid grid-cols-2 h-[calc(100svh-56px)]">
         <section className="border-r border-gray-100">
           <Calendar />
         </section>
-        <section className="h-full overflow-y-auto">
+        <section className="h-full overflow-y-auto ring-1 ring-black/5 shadow">
           <TabProvider>
             <CalendarTabs />
-            <div className="flex-1 overflow-y-auto p-4">
-              <SearchForm websocTerms={websocTerms} />
-            </div>
+            <SearchForm websocTerms={websocTerms} />
+            <AddedCourses />
           </TabProvider>
         </section>
       </div>
