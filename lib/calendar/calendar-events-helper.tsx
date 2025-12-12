@@ -115,7 +115,6 @@ function transformCalendarEvents(calendarEvents: CalendarEvents[]) {
   const events: ReactElement[] = [];
 
   calendarEvents.forEach((calendarEvent, eventIndex) => {
-    const title = `${calendarEvent.deptCode} ${calendarEvent.courseNumber}`;
     const color = getColorForDept(calendarEvent.sectionCode);
 
     calendarEvent.meetings.forEach((meeting, meetingIndex) => {
@@ -154,7 +153,13 @@ function transformCalendarEvents(calendarEvents: CalendarEvents[]) {
             startTime={{ hour: startHour, minute: startMinute % 60 }}
             endTime={{ hour: endHour, minute: endMinute % 60 }}
             color={color}
-            title={title}
+            deptCode={calendarEvent.deptCode}
+            courseNumber={calendarEvent.courseNumber}
+            sectionType={calendarEvent.sectionType}
+            sectionCode={calendarEvent.sectionCode}
+            finalExam={calendarEvent.finalExam}
+            locations={meeting.bldg}
+            instructors={calendarEvent.instructors}
           />
         );
       });

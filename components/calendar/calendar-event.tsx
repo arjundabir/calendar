@@ -1,5 +1,21 @@
 import { ReactNode } from 'react';
 import { z } from 'zod';
+import { CalendarEvents } from './calendar-provider';
+import { Button } from '../button';
+import {
+  Popover,
+  PopoverButton,
+  PopoverDivider,
+  PopoverPanel,
+} from '../popover';
+import {
+  AcademicCapIcon,
+  ClipboardIcon,
+  MapPinIcon,
+  PencilIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline';
+import { format } from 'date-fns';
 
 function CalendarList({ children }: { children: ReactNode }) {
   return (
@@ -216,7 +232,13 @@ interface CalendarEventType {
   startTime: TimeType;
   endTime: TimeType;
   color: TailwindColors;
-  title: string;
+  deptCode: string;
+  courseNumber: string;
+  sectionType: string;
+  sectionCode: string;
+  finalExam: CalendarEvents['finalExam'];
+  locations: string[];
+  instructors: string[];
 }
 
 function CalendarEvent({
@@ -224,7 +246,13 @@ function CalendarEvent({
   startTime,
   endTime,
   color,
-  title,
+  deptCode,
+  courseNumber,
+  sectionType,
+  sectionCode,
+  finalExam,
+  locations,
+  instructors,
 }: CalendarEventType) {
   // Validate startTime and endTime using hourSchema and minuteSchema
   hourSchema.parse(startTime.hour);
@@ -240,7 +268,23 @@ function CalendarEvent({
     F: 5,
   };
   const formatTime = (time: number) => (time % 12 === 0 ? 12 : time % 12);
-  const meridiem = (hour: number) => (hour % 12 > 0 ? 'PM' : 'AM');
+  const meridiem = (hour: number) => (hour % 12 > 0 ? 'AM' : 'PM');
+  const formatDayOfWeek = (day: CalendarEventType['dayOfWeek']) => {
+    switch (day) {
+      case 'M':
+        return 'Monday';
+      case 'T':
+        return 'Tuesday';
+      case 'W':
+        return 'Wednesday';
+      case 'Th':
+        return 'Thursday';
+      case 'F':
+        return 'Friday';
+      default:
+        return '';
+    }
+  };
 
   const timeToRow = (time: TimeType): number => {
     const totalMinutes = (time.hour - 7) * 60 + time.minute;
@@ -259,23 +303,75 @@ function CalendarEvent({
       }}
       className={`relative flex col-start-${dayOfWeekId[dayOfWeek]}`}
     >
-      <a
-        href="#"
-        className={`group inset-px absolute flex flex-col rounded ${colors.bg} p-1 text-xs/5 ${colors.hover} leading-none`}
-      >
-        <p className={`order-1 font-semibold ${colors.title}`} style={{}}>
-          {title || 'Flight to Paris'}
-        </p>
-        <p className={`${colors.time} ${colors.timeHover}`}>
-          <time dateTime="2022-01-12T07:30">
-            {formatTime(startTime.hour)}:
-            {startTime.minute.toString().padStart(2, '0')}{' '}
-            {meridiem(startTime.hour)} - {formatTime(endTime.hour)}:
-            {endTime.minute.toString().padStart(2, '0')}{' '}
-            {meridiem(endTime.hour)}
-          </time>
-        </p>
-      </a>
+      <Popover>
+        <PopoverButton
+          className={`text-left group inset-px absolute flex flex-col rounded ${colors.bg} p-1! text-xs/3.5! ${colors.hover} w-full`}
+        >
+          <p className={`font-semibold ${colors.title}`}>
+            {deptCode} {courseNumber} {sectionType}
+          </p>
+          <p className={`${colors.time} ${colors.timeHover}`}>
+            <time className=" ">
+              {formatTime(startTime.hour)}:
+              {startTime.minute.toString().padStart(2, '0')}{' '}
+              {meridiem(startTime.hour)}
+            </time>
+            ,&nbsp;<span>{locations?.map((location) => location)}</span>
+          </p>
+        </PopoverButton>
+        <PopoverPanel anchor="left" className="w-96!">
+          <div className="flex justify-end">
+            <Button plain>
+              <TrashIcon className="size-4" />
+            </Button>
+          </div>
+          <div className="px-2">
+            <div>
+              <h2 className="text-2xl font-medium">
+                {deptCode} {courseNumber} {sectionType}
+              </h2>
+              <p className="text-sm">
+                {formatDayOfWeek(dayOfWeek)}, {startTime.hour}:
+                {startTime.minute.toString().padStart(2, '0')}{' '}
+                {meridiem(startTime.hour)} - {endTime.hour}:
+                {endTime.minute.toString().padStart(2, '0')}{' '}
+                {meridiem(endTime.hour)}
+              </p>
+            </div>
+          </div>
+          <div className="my-4 flex flex-col gap-y-1">
+            <Button plain className="justify-start">
+              <MapPinIcon /> {locations?.map((location) => location)}
+            </Button>
+            <Button plain className="justify-start">
+              <ClipboardIcon />
+              {sectionCode}
+            </Button>
+            <Button plain className="justify-start">
+              <AcademicCapIcon /> {instructors.join(', ')}
+            </Button>
+          </div>
+          <PopoverDivider />
+          <h4 className="px-2 text-lg font-medium">Final</h4>
+          <Button plain className="w-full justify-start font-normal!">
+            <PencilIcon />
+            {finalExam?.examStatus === 'SCHEDULED_FINAL'
+              ? `${finalExam.dayOfWeek}, ${format(
+                  new Date(2000, finalExam.month, 1),
+                  'LLLL'
+                )} ${finalExam.day} ${
+                  finalExam.startTime.hour
+                }:${finalExam.startTime.minute.toString().padStart(2, '0')} - ${
+                  finalExam.endTime.hour
+                }:${finalExam.endTime.minute
+                  .toString()
+                  .padStart(2, '0')} ${meridiem(
+                  finalExam.endTime.hour
+                )} at ${finalExam.bldg.join(', ')}`
+              : finalExam?.examStatus.split('_')[0]}
+          </Button>
+        </PopoverPanel>
+      </Popover>
     </li>
   );
 }
