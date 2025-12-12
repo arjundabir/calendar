@@ -101,17 +101,14 @@ export const createCalendarEvent = mutation({
 })
 
 export const getUserEvents = query({
-    args: {
-        userId: v.string()
-    },
-    handler: async (ctx, args) => {
+    handler: async (ctx,) => {
         const user = await ctx.auth.getUserIdentity()
         
         if(!user) return []
 
         const events = await ctx.db
             .query("calendarEvents")
-            .filter(q => q.eq(q.field("userId"), args.userId))
+            .filter(q => q.eq(q.field("userId"), user.subject))
             .collect();
         return events;
     }
@@ -124,10 +121,11 @@ export const deleteCalendarEvent = mutation({
     handler: async (ctx, args) => {
         const user = await ctx.auth.getUserIdentity();
 
-        if(!user) return [];
+        if(!user) throw new Error("no user detected")
 
         const event = await ctx.db
             .query("calendarEvents")
+            .filter(q => q.eq(q.field("userId"), user.subject))
             .filter(q => q.eq(q.field("sectionCode"), args.sectionCode))
             .first();
         if (event) {

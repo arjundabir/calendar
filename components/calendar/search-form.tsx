@@ -98,10 +98,7 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
 
   const addToCalendarDb = useMutation(api.calendar.createCalendarEvent);
   const deleteCalendarEvent = useMutation(api.calendar.deleteCalendarEvent);
-  const getCalendarEvents = useQuery(
-    api.calendar.getUserEvents,
-    isSignedIn ? { userId: user.id } : 'skip'
-  );
+  const getCalendarEvents = useQuery(api.calendar.getUserEvents);
 
   return (
     <div>

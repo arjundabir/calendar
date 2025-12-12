@@ -5,20 +5,10 @@ import { CalendarList } from './calendar-event';
 import { useCalendarContext } from './calendar-provider';
 import { Authenticated, Unauthenticated, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { useUser } from '@clerk/nextjs';
 
 export default function Calendar() {
   const { calendarEvents } = useCalendarContext();
-  const { user, isSignedIn } = useUser();
-
-  const dbCalendarEvents = useQuery(
-    api.calendar.getUserEvents,
-    isSignedIn
-      ? {
-          userId: user?.id,
-        }
-      : 'skip'
-  );
+  const dbCalendarEvents = useQuery(api.calendar.getUserEvents);
 
   const dbCalendarEventsNoUserId =
     dbCalendarEvents?.map(({ userId: _, ...rest }) => rest) ?? [];
