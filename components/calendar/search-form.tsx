@@ -2,7 +2,6 @@
 
 import { Select } from '@/components/select';
 import { Button } from '../button';
-import { Input } from '../input';
 import {
   QueryWebSocParams,
   SectionSchema,
@@ -10,9 +9,9 @@ import {
   WebSocQuerySuccess,
 } from '@/types/websoc';
 import z from 'zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { queryWebSoc } from '@/app/actions';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -41,6 +40,8 @@ import {
 import { api } from '@/convex/_generated/api';
 import { useUser } from '@clerk/nextjs';
 import { useTabContext } from './tab-context';
+import { Combobox, ComboboxLabel, ComboboxOption } from '../combobox';
+import { CourseIndex } from '@/app/api/cron/index-courses/route';
 
 const searchCourseSchema = z.object({
   term: z.string(),
@@ -48,7 +49,13 @@ const searchCourseSchema = z.object({
 });
 type SearchCourseType = z.infer<typeof searchCourseSchema>;
 
-export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
+export default function SearchForm({
+  websocTerms,
+  coursesIndex,
+}: {
+  websocTerms: Term[];
+  coursesIndex: CourseIndex[];
+}) {
   const [webSocData, setWebSocData] = useState<
     WebSocQuerySuccess['data'] | null
   >(null);
@@ -63,7 +70,7 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
     course: '',
   };
 
-  const { handleSubmit, register } = useForm({
+  const { handleSubmit, register, control } = useForm({
     defaultValues: initialValues,
   });
 
@@ -116,8 +123,42 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
               </option>
             ))}
           </Select>
-
-          <Input placeholder="Search courses" {...register('course')} />
+          <Controller
+            name="course"
+            control={control}
+            render={({ field }) => (
+              <Combobox
+                options={coursesIndex}
+                displayValue={(course) =>
+                  course ? `${course.department} ${course.courseNumber}` : ''
+                }
+                value={
+                  coursesIndex.find(
+                    (course) =>
+                      `${course.department} ${course.courseNumber}` ===
+                      field.value
+                  ) || null
+                }
+                onChange={(course) => {
+                  if (course && course.department && course.courseNumber) {
+                    field.onChange(
+                      `${course.department} ${course.courseNumber}`
+                    );
+                    handleSubmit(onSubmit)();
+                  } else field.onChange('');
+                }}
+                placeholder="Search courses"
+              >
+                {(course) => (
+                  <ComboboxOption value={course}>
+                    <ComboboxLabel>
+                      {course.department} {course.courseNumber}: {course.title}
+                    </ComboboxLabel>
+                  </ComboboxOption>
+                )}
+              </Combobox>
+            )}
+          />
           <Button outline type="submit">
             Search
           </Button>
@@ -237,9 +278,12 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                   {section?.sectionComment && (
                                     <TableRow className="col-span-full">
                                       <TableCell colSpan={11}>
-                                        <Text caption>
-                                          {section.sectionComment}
-                                        </Text>
+                                        <Text
+                                          caption
+                                          dangerouslySetInnerHTML={{
+                                            __html: section.sectionComment,
+                                          }}
+                                        />
                                       </TableCell>
                                     </TableRow>
                                   )}

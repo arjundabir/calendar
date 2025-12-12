@@ -71,4 +71,4 @@ async function queryWebSoc(params: QueryWebSocParams) {
   else throw new Error(parsed.message);
 }
 
-export { getWebSocTerms, queryWebSoc };
+export { getWebSocTerms, queryWebSoc};
