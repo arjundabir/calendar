@@ -1,8 +1,0 @@
-{
-    "crons": [
-        {
-            "path": "/api/cron/index-courses",
-            "schedule": "0 5 1 * *"
-        }
-    ]
-}
