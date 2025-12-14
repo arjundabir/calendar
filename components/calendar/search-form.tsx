@@ -142,16 +142,29 @@ export default function SearchForm({
     tabs[0].current && (
       <div className="flex-1 overflow-y-auto p-4">
         <form className="flex gap-1" onSubmit={handleSubmit(onSubmit)}>
-          <Select className="max-w-fit" {...register('term')}>
-            <option value="" disabled>
-              Select a term
-            </option>
-            {websocTerms.map((term) => (
-              <option key={term.shortName} value={term.shortName}>
-                {term.longName}
-              </option>
-            ))}
-          </Select>
+          <Controller
+            name="term"
+            control={control}
+            render={({ field }) => (
+              <Select
+                className="max-w-fit"
+                value={field.value}
+                onChange={(e) => {
+                  field.onChange(e.target.value);
+                  handleSubmit(onSubmit)();
+                }}
+              >
+                <option value="" disabled>
+                  Select a term
+                </option>
+                {websocTerms.map((term) => (
+                  <option key={term.shortName} value={term.shortName}>
+                    {term.longName}
+                  </option>
+                ))}
+              </Select>
+            )}
+          />
           <Controller
             name="course"
             control={control}
