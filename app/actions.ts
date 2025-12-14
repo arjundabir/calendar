@@ -59,7 +59,7 @@ async function listAllCalendars() {
     cache: 'force-cache',
     next: { revalidate: 60 * 60 * 24 * 30 },
   });
-  if (error) return null;
+  if (error) return [];
   return data.data;
 }
 
