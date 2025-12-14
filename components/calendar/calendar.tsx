@@ -2,12 +2,15 @@
 
 import { Authenticated, Unauthenticated, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { transformCalendarEvents } from '@/lib/calendar/calendar-events-helper';
+import {
+  transformCalendarEvents,
+  transformFinalsEvents,
+} from '@/lib/calendar/calendar-events-helper';
 import { CalendarList } from './calendar-event';
 import { useCalendarContext } from './calendar-provider';
 
 export default function Calendar() {
-  const { calendarEvents, activeTerm } = useCalendarContext();
+  const { calendarEvents, activeTerm, isFinalsSchedule } = useCalendarContext();
   const dbCalendarEvents = useQuery(api.calendar.getUserEvents);
 
   const dbCalendarEventsNoUserId =
@@ -17,6 +20,13 @@ export default function Calendar() {
     calendarEvents.filter((event) => event.termId === activeTerm?._id)
   );
   const transformedDbEvents = transformCalendarEvents(dbCalendarEventsNoUserId);
+
+  const transformedFinalsEvents = transformFinalsEvents(
+    calendarEvents.filter((event) => event.termId === activeTerm?._id)
+  );
+  const transformedDbFinalsEvents = transformFinalsEvents(
+    dbCalendarEventsNoUserId
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -91,8 +101,14 @@ export default function Calendar() {
 
               {/* Events */}
               <CalendarList>
-                <Authenticated>{transformedDbEvents}</Authenticated>
-                <Unauthenticated>{transformedEvents}</Unauthenticated>
+                <Authenticated>
+                  {isFinalsSchedule
+                    ? transformedDbFinalsEvents
+                    : transformedDbEvents}
+                </Authenticated>
+                <Unauthenticated>
+                  {isFinalsSchedule ? transformedFinalsEvents : transformedEvents}
+                </Unauthenticated>
               </CalendarList>
             </div>
           </div>

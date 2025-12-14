@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
 import {
   Navbar,
+  NavbarDivider,
   NavbarItem,
   NavbarLabel,
   NavbarSection,
@@ -17,7 +18,6 @@ import {
   Unauthenticated,
   useMutation,
   usePreloadedQuery,
-  useQuery,
 } from 'convex/react';
 import { SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 import {
@@ -39,6 +39,7 @@ import { api } from '@/convex/_generated/api';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { Input } from '../input';
 import { useStoreUserEffect } from '@/hooks/useStoreUserEffect';
+import { Button } from '../button';
 
 // Navigate through the nested websoc response structure to get the correct types
 type WebSocData =
@@ -63,6 +64,7 @@ type CalendarContextType = {
   setCalendarEvents: (events: CalendarEvents[] | []) => void;
   removeCalendarEvent: (sectionCode: string) => void;
   activeTerm: Doc<'terms'> | undefined;
+  isFinalsSchedule: boolean;
 };
 
 const CalendarContext = createContext<CalendarContextType | undefined>(
@@ -95,6 +97,7 @@ export function CalendarProvider({
     'terms',
     []
   );
+  const [isFinalsSchedule, setIsFinalsSchedule] = useState<boolean>(false);
 
   function removeCalendarEvent(sectionCode: string): void {
     setCalendarEvents(
@@ -200,98 +203,118 @@ export function CalendarProvider({
         setCalendarEvents,
         removeCalendarEvent,
         activeTerm,
+        isFinalsSchedule,
       }}
     >
       <Navbar className="px-2!">
-        <AuthLoading>
-          <div className="h-9 w-28 p-2">
-            <div className="size-full animate-pulse bg-gray-200 rounded " />
-          </div>
-        </AuthLoading>
-        <Unauthenticated>
-          <Dropdown>
-            <DropdownButton as={NavbarItem}>
-              {latestTerm.quarter} {latestTerm.year}
-              <ChevronDownIcon />
-            </DropdownButton>
-            <DropdownMenu>
-              <DropdownSection>
-                {termsLocalStorage.map((term) => (
-                  <DropdownItem key={term._id}>
-                    {term.termName}
-                    {term.isActive && <CheckIcon />}
-                  </DropdownItem>
-                ))}
-              </DropdownSection>
-              <DropdownDivider />
-              <DropdownSection>
-                <SignUpButton mode="modal">
-                  <DropdownItem>New Calendar&hellip;</DropdownItem>
-                </SignUpButton>
-              </DropdownSection>
-            </DropdownMenu>
-          </Dropdown>
-        </Unauthenticated>
-        <Authenticated>
-          <Dropdown>
-            <DropdownButton as={NavbarItem}>
-              <NavbarLabel>{activeTerm?.termName}</NavbarLabel>
-              <ChevronDownIcon />
-            </DropdownButton>
-            <DropdownMenu className="min-w-64" anchor="bottom start">
-              <DropdownSection>
-                {terms?.map((term) => (
-                  <DropdownItem
-                    key={term._id}
-                    value={term.termName}
-                    onClick={() => {
-                      setActive({ id: term._id });
-                    }}
-                  >
-                    <DropdownLabel>{term.termName}</DropdownLabel>
-                    {term.isActive && <CheckIcon />}
-                    <TrashIcon
-                      className="col-start-6! row-start-1! hover:text-red-400!"
-                      onClick={(e) => {
+        <NavbarSection>
+          <AuthLoading>
+            <Dropdown>
+              <DropdownButton as={NavbarItem} disabled>
+                Loading
+                <ChevronDownIcon />
+              </DropdownButton>
+              <DropdownMenu />
+            </Dropdown>
+          </AuthLoading>
+          <Unauthenticated>
+            <Dropdown>
+              <DropdownButton as={NavbarItem}>
+                {latestTerm.quarter} {latestTerm.year}
+                <ChevronDownIcon />
+              </DropdownButton>
+              <DropdownMenu>
+                <DropdownSection>
+                  {termsLocalStorage.map((term) => (
+                    <DropdownItem key={term._id}>
+                      {term.termName}
+                      {term.isActive && <CheckIcon />}
+                    </DropdownItem>
+                  ))}
+                </DropdownSection>
+                <DropdownDivider />
+                <DropdownSection>
+                  <SignUpButton mode="modal">
+                    <DropdownItem>New Calendar&hellip;</DropdownItem>
+                  </SignUpButton>
+                </DropdownSection>
+              </DropdownMenu>
+            </Dropdown>
+          </Unauthenticated>
+          <Authenticated>
+            <Dropdown>
+              <DropdownButton as={NavbarItem}>
+                <NavbarLabel>{activeTerm?.termName}</NavbarLabel>
+                <ChevronDownIcon />
+              </DropdownButton>
+              <DropdownMenu className="min-w-64" anchor="bottom start">
+                <DropdownSection>
+                  {terms?.map((term) => (
+                    <DropdownItem
+                      key={term._id}
+                      value={term.termName}
+                      onClick={() => {
+                        setActive({ id: term._id });
+                      }}
+                    >
+                      <DropdownLabel>{term.termName}</DropdownLabel>
+                      {term.isActive && <CheckIcon />}
+                      <TrashIcon
+                        className="col-start-6! row-start-1! hover:text-red-400!"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteTerm({ id: term._id });
+                        }}
+                      />
+                    </DropdownItem>
+                  ))}
+                  {isCreatingNewCalendar && (
+                    <Input
+                      placeholder="Enter new calendar name"
+                      className="col-span-full"
+                      autoFocus
+                      onBlur={() => setIsCreatingNewCalendar(false)}
+                      onKeyDown={(e) => {
                         e.stopPropagation();
-                        deleteTerm({ id: term._id });
+                        if (e.key === 'Enter') {
+                          const name = (e.target as HTMLInputElement).value;
+                          if (name) {
+                            createTerm({ name });
+                            setIsCreatingNewCalendar(false);
+                          }
+                        }
                       }}
                     />
-                  </DropdownItem>
-                ))}
-                {isCreatingNewCalendar && (
-                  <Input
-                    placeholder="Enter new calendar name"
-                    className="col-span-full"
-                    autoFocus
-                    onBlur={() => setIsCreatingNewCalendar(false)}
-                    onKeyDown={(e) => {
-                      e.stopPropagation();
-                      if (e.key === 'Enter') {
-                        const name = (e.target as HTMLInputElement).value;
-                        if (name) {
-                          createTerm({ name });
-                          setIsCreatingNewCalendar(false);
-                        }
-                      }
+                  )}
+                </DropdownSection>
+                <DropdownDivider />
+                <DropdownSection>
+                  <DropdownItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsCreatingNewCalendar((prev) => !prev);
                     }}
-                  />
-                )}
-              </DropdownSection>
-              <DropdownDivider />
-              <DropdownSection>
-                <DropdownItem
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsCreatingNewCalendar((prev) => !prev);
-                  }}
-                >
-                  New calendar&hellip;
-                </DropdownItem>
-              </DropdownSection>
-            </DropdownMenu>
-          </Dropdown>
-        </Authenticated>
+                  >
+                    New calendar&hellip;
+                  </DropdownItem>
+                </DropdownSection>
+              </DropdownMenu>
+            </Dropdown>
+          </Authenticated>
+          <NavbarDivider />
+          <NavbarItem
+            current={!isFinalsSchedule}
+            onClick={() => setIsFinalsSchedule(false)}
+          >
+            Schedule
+          </NavbarItem>
+          <NavbarItem
+            current={isFinalsSchedule}
+            onClick={() => setIsFinalsSchedule(true)}
+          >
+            Finals
+          </NavbarItem>
+        </NavbarSection>
         <NavbarSpacer />
         <NavbarSection>
           <Unauthenticated>

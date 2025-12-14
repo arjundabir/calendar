@@ -125,6 +125,23 @@ function eventsOverlap(
   return startA < endB && startB < endA;
 }
 
+// Helper function to parse final exam dayOfWeek string to CalendarEvent format
+function parseFinalDayOfWeek(day: string): 'M' | 'T' | 'W' | 'Th' | 'F' | null {
+  const dayMap: Record<string, 'M' | 'T' | 'W' | 'Th' | 'F'> = {
+    Mon: 'M',
+    Monday: 'M',
+    Tue: 'T',
+    Tuesday: 'T',
+    Wed: 'W',
+    Wednesday: 'W',
+    Thu: 'Th',
+    Thursday: 'Th',
+    Fri: 'F',
+    Friday: 'F',
+  };
+  return dayMap[day] ?? null;
+}
+
 // Transform calendarEvents into CalendarEvent components
 function transformCalendarEvents(calendarEvents: CalendarEvents[]) {
   // First pass: collect all event data
@@ -257,4 +274,138 @@ function transformCalendarEvents(calendarEvents: CalendarEvents[]) {
   return events;
 }
 
-export { parseDays, getColorForDept, transformCalendarEvents };
+// Transform calendarEvents into CalendarEvent components for finals schedule
+function transformFinalsEvents(calendarEvents: CalendarEvents[]) {
+  // First pass: collect all final exam event data
+  type EventData = {
+    dayOfWeek: 'M' | 'T' | 'W' | 'Th' | 'F';
+    startTime: { hour: number; minute: number };
+    endTime: { hour: number; minute: number };
+    color: ReturnType<typeof getColorForDept>;
+    deptCode: string;
+    courseNumber: string;
+    sectionType: string;
+    sectionCode: string;
+    finalExam: CalendarEvents['finalExam'];
+    locations: string[];
+    instructors: string[];
+    key: string;
+  };
+
+  const eventDataList: EventData[] = [];
+
+  calendarEvents.forEach((calendarEvent, eventIndex) => {
+    // Only process events with scheduled finals
+    if (
+      calendarEvent.finalExam.examStatus !== 'SCHEDULED_FINAL'
+    ) {
+      return;
+    }
+
+    const color = getColorForDept(calendarEvent.sectionCode);
+    const finalExam = calendarEvent.finalExam;
+
+    // Parse dayOfWeek string to CalendarEvent format
+    const dayOfWeek = parseFinalDayOfWeek(finalExam.dayOfWeek);
+    if (!dayOfWeek) {
+      return; // Skip if dayOfWeek cannot be parsed
+    }
+
+    // Round minutes to nearest 10 (CalendarEvent requirement)
+    const startMinute = roundToNearest10(finalExam.startTime.minute);
+    const endMinute = roundToNearest10(finalExam.endTime.minute);
+
+    // Adjust hour if rounding minutes caused overflow
+    let startHour = finalExam.startTime.hour;
+    let endHour = finalExam.endTime.hour;
+
+    if (startMinute >= 60) {
+      startHour += 1;
+    }
+    if (endMinute >= 60) {
+      endHour += 1;
+    }
+
+    // Ensure hours are within valid range (7-23)
+    startHour = Math.max(7, Math.min(23, startHour));
+    endHour = Math.max(7, Math.min(23, endHour));
+
+    eventDataList.push({
+      dayOfWeek,
+      startTime: { hour: startHour, minute: startMinute % 60 },
+      endTime: { hour: endHour, minute: endMinute % 60 },
+      color,
+      deptCode: calendarEvent.deptCode,
+      courseNumber: calendarEvent.courseNumber,
+      sectionType: calendarEvent.sectionType,
+      sectionCode: calendarEvent.sectionCode,
+      finalExam: calendarEvent.finalExam,
+      locations: finalExam.bldg,
+      instructors: calendarEvent.instructors,
+      key: `final-${eventIndex}-${dayOfWeek}`,
+    });
+  });
+
+  // Second pass: calculate overlaps for each event
+  const events: ReactElement[] = eventDataList.map((eventData) => {
+    // Convert times to minutes for comparison
+    const startMinutes = timeToMinutes(
+      eventData.startTime.hour,
+      eventData.startTime.minute
+    );
+    const endMinutes = timeToMinutes(
+      eventData.endTime.hour,
+      eventData.endTime.minute
+    );
+
+    // Find all overlapping events on the same day
+    const overlappingEvents = eventDataList.filter((otherEvent) => {
+      if (otherEvent.dayOfWeek !== eventData.dayOfWeek) {
+        return false;
+      }
+      const otherStartMinutes = timeToMinutes(
+        otherEvent.startTime.hour,
+        otherEvent.startTime.minute
+      );
+      const otherEndMinutes = timeToMinutes(
+        otherEvent.endTime.hour,
+        otherEvent.endTime.minute
+      );
+      return eventsOverlap(
+        startMinutes,
+        endMinutes,
+        otherStartMinutes,
+        otherEndMinutes
+      );
+    });
+
+    // Calculate overlap count and index
+    const overlapCount = overlappingEvents.length;
+    const overlapIndex = overlappingEvents.findIndex(
+      (e) => e.key === eventData.key
+    );
+
+    return (
+      <CalendarEvent
+        key={eventData.key}
+        dayOfWeek={eventData.dayOfWeek}
+        startTime={eventData.startTime}
+        endTime={eventData.endTime}
+        color={eventData.color}
+        deptCode={eventData.deptCode}
+        courseNumber={eventData.courseNumber}
+        sectionType={eventData.sectionType}
+        sectionCode={eventData.sectionCode}
+        finalExam={eventData.finalExam}
+        locations={eventData.locations}
+        instructors={eventData.instructors}
+        overlapCount={overlapCount}
+        overlapIndex={overlapIndex}
+      />
+    );
+  });
+
+  return events;
+}
+
+export { parseDays, getColorForDept, transformCalendarEvents, transformFinalsEvents };
