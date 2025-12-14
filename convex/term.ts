@@ -101,6 +101,14 @@ export const deleteTerm = mutation({
 		const term = await ctx.db.get(args.id);
 		if (term?.isActive) return null;
 
+		// Delete all calendar events associated with this term
+		const calendarEvents = await ctx.db
+			.query('calendarEvents')
+			.filter((q) => q.eq(q.field('termId'), args.id))
+			.collect();
+
+		await Promise.all(calendarEvents.map((event) => ctx.db.delete(event._id)));
+
 		await ctx.db.delete(args.id);
 	},
 });
