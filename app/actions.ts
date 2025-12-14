@@ -50,7 +50,7 @@ async function queryWebSoc(params: QueryWebSocParams) {
       },
     },
   });
-  if (error) return [];
+  if (error) return null;
   return data.data;
 }
 
@@ -59,7 +59,7 @@ async function listAllCalendars() {
     cache: 'force-cache',
     next: { revalidate: 60 * 60 * 24 * 30 },
   });
-  if (error) return [];
+  if (error) return null;
   return data.data;
 }
 

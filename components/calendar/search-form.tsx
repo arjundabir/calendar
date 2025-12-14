@@ -2,16 +2,20 @@
 
 import { Select } from '@/components/select';
 import { Button } from '../button';
-import {
-  QueryWebSocParams,
-  SectionSchema,
-  Term,
-  WebSocQuerySuccess,
-} from '@/types/websoc';
+import { paths } from '@/types/anteater-api-types';
 import z from 'zod';
+
+type Term =
+  paths['/v2/rest/websoc/terms']['get']['responses'][200]['content']['application/json']['data'][number];
+type WebSocEndpoint = paths['/v2/rest/websoc']['get'];
+type WebSocData =
+  WebSocEndpoint['responses'][200]['content']['application/json']['data'];
+type WebSocQuarter = NonNullable<
+  WebSocEndpoint['parameters']['query']
+>['quarter'];
 import { useForm, Controller } from 'react-hook-form';
 import { queryWebSoc } from '@/app/actions';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -56,9 +60,7 @@ export default function SearchForm({
   websocTerms: Term[];
   coursesIndex: CourseIndex[];
 }) {
-  const [webSocData, setWebSocData] = useState<
-    WebSocQuerySuccess['data'] | null
-  >(null);
+  const [webSocData, setWebSocData] = useState<WebSocData | null>(null);
   const { tabs } = useTabContext();
 
   const { user, isSignedIn } = useUser();
@@ -90,16 +92,14 @@ export default function SearchForm({
 
     const response = await queryWebSoc({
       year,
-      quarter: quarter as QueryWebSocParams['quarter'],
+      quarter: quarter as WebSocQuarter,
       department,
       courseNumber,
     });
     setWebSocData(response);
   }
 
-  function sectionAdded(
-    sectionCode: z.infer<typeof SectionSchema>['sectionCode']
-  ) {
+  function sectionAdded(sectionCode: string) {
     return calendarEvents.some(
       (calendarEvent) => calendarEvent.sectionCode === sectionCode
     );
