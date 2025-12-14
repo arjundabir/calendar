@@ -1,5 +1,5 @@
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { v } from 'convex/values';
+import { mutation, query } from './_generated/server';
 
 export const getTerms = query({
 	handler: async (ctx) => {
@@ -7,14 +7,14 @@ export const getTerms = query({
 		if (!identity) return [];
 
 		const user = await ctx.db
-			.query("users")
-			.withIndex("by_clerkId", (q) => q.eq("clerkId", identity.tokenIdentifier))
+			.query('users')
+			.withIndex('by_clerkId', (q) => q.eq('clerkId', identity.tokenIdentifier))
 			.unique();
 		if (!user) return [];
 
 		const terms = await ctx.db
-			.query("terms")
-			.withIndex("by_user", (q) => q.eq("userId", user._id))
+			.query('terms')
+			.withIndex('by_user', (q) => q.eq('userId', user._id))
 			.collect();
 
 		return terms;
@@ -27,25 +27,25 @@ export const createTerm = mutation({
 	},
 	handler: async (ctx, args) => {
 		const identity = await ctx.auth.getUserIdentity();
-		if (!identity) throw new Error("Unauthenticated call to mutation");
+		if (!identity) throw new Error('Unauthenticated call to mutation');
 
 		const user = await ctx.db
-			.query("users")
-			.withIndex("by_clerkId", (q) => q.eq("clerkId", identity.tokenIdentifier))
+			.query('users')
+			.withIndex('by_clerkId', (q) => q.eq('clerkId', identity.tokenIdentifier))
 			.unique();
-		if (!user) throw new Error("Unauthenticated call to mutation");
+		if (!user) throw new Error('Unauthenticated call to mutation');
 
 		const existingTerm = await ctx.db
-			.query("terms")
-			.withIndex("by_name", (q) => q.eq("termName", args.name))
-			.filter((q) => q.eq(q.field("userId"), user._id))
+			.query('terms')
+			.withIndex('by_name', (q) => q.eq('termName', args.name))
+			.filter((q) => q.eq(q.field('userId'), user._id))
 			.unique();
 
-		if (existingTerm) throw new Error("this term already exists");
+		if (existingTerm) throw new Error('this term already exists');
 
 		const userTerms = await ctx.db
-			.query("terms")
-			.withIndex("by_user", (q) => q.eq("userId", user._id))
+			.query('terms')
+			.withIndex('by_user', (q) => q.eq('userId', user._id))
 			.collect();
 		await Promise.all(
 			userTerms
@@ -53,7 +53,7 @@ export const createTerm = mutation({
 				.map((term) => ctx.db.patch(term._id, { isActive: false })),
 		);
 
-		await ctx.db.insert("terms", {
+		await ctx.db.insert('terms', {
 			userId: user._id,
 			termName: args.name,
 			isActive: true,
@@ -63,21 +63,21 @@ export const createTerm = mutation({
 
 export const setActiveTerm = mutation({
 	args: {
-		id: v.id("terms"),
+		id: v.id('terms'),
 	},
 	handler: async (ctx, args) => {
 		const identity = await ctx.auth.getUserIdentity();
-		if (!identity) throw new Error("Unauthenticated call to mutation");
+		if (!identity) throw new Error('Unauthenticated call to mutation');
 
 		const user = await ctx.db
-			.query("users")
-			.withIndex("by_clerkId", (q) => q.eq("clerkId", identity.tokenIdentifier))
+			.query('users')
+			.withIndex('by_clerkId', (q) => q.eq('clerkId', identity.tokenIdentifier))
 			.unique();
-		if (!user) throw new Error("Unauthenticated call to mutation");
+		if (!user) throw new Error('Unauthenticated call to mutation');
 
 		const userTerms = await ctx.db
-			.query("terms")
-			.withIndex("by_user", (q) => q.eq("userId", user._id))
+			.query('terms')
+			.withIndex('by_user', (q) => q.eq('userId', user._id))
 			.collect();
 
 		await Promise.all(
@@ -92,7 +92,7 @@ export const setActiveTerm = mutation({
 
 export const deleteTerm = mutation({
 	args: {
-		id: v.id("terms"),
+		id: v.id('terms'),
 	},
 	handler: async (ctx, args) => {
 		const user = await ctx.auth.getUserIdentity();

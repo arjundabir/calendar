@@ -5,10 +5,10 @@ import { termsTable } from './tables/term';
 import { usersTable } from './tables/user';
 
 const schema = defineSchema({
-  ...authTables,
-  calendarEvents: defineTable(calendarEventValidator),
-  terms: termsTable,
-  users: usersTable,
+	...authTables,
+	calendarEvents: defineTable(calendarEventValidator),
+	terms: termsTable,
+	users: usersTable,
 });
 
 export default schema;

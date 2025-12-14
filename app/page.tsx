@@ -9,29 +9,29 @@ import fs from 'node:fs';
 import { getLatestSocAvailable } from '@/lib/calendar/terms-helper';
 
 export default async function Home() {
-  const [websocTerms, coursesIndex, allCalendars] = await Promise.all([
-    getWebSocTerms(),
-    fs.promises.readFile(`${process.cwd()}/public/course-index.json`, 'utf8'),
-    listAllCalendars(),
-  ]);
+	const [websocTerms, coursesIndex, allCalendars] = await Promise.all([
+		getWebSocTerms(),
+		fs.promises.readFile(`${process.cwd()}/public/course-index.json`, 'utf8'),
+		listAllCalendars(),
+	]);
 
-  return (
-    <CalendarProvider latestTerm={getLatestSocAvailable(allCalendars)}>
-      <div className="grid grid-cols-2 h-[calc(100svh-56px)]">
-        <section className="border-r border-gray-100">
-          <Calendar />
-        </section>
-        <section className="h-full overflow-y-auto ring-1 ring-black/5 shadow">
-          <TabProvider>
-            <CalendarTabs />
-            <SearchForm
-              websocTerms={websocTerms}
-              coursesIndex={JSON.parse(coursesIndex)}
-            />
-            <AddedCourses />
-          </TabProvider>
-        </section>
-      </div>
-    </CalendarProvider>
-  );
+	return (
+		<CalendarProvider latestTerm={getLatestSocAvailable(allCalendars)}>
+			<div className="grid grid-cols-2 h-[calc(100svh-56px)]">
+				<section className="border-r border-gray-100">
+					<Calendar />
+				</section>
+				<section className="h-full overflow-y-auto ring-1 ring-black/5 shadow">
+					<TabProvider>
+						<CalendarTabs />
+						<SearchForm
+							websocTerms={websocTerms}
+							coursesIndex={JSON.parse(coursesIndex)}
+						/>
+						<AddedCourses />
+					</TabProvider>
+				</section>
+			</div>
+		</CalendarProvider>
+	);
 }

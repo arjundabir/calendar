@@ -1,5 +1,5 @@
-import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { mutation, query } from './_generated/server';
+import { v } from 'convex/values';
 
 // Time validator for meetings and final exams
 const timeValidator = v.object({
@@ -24,13 +24,13 @@ const meetingValidator = v.union(
 // Final exam validator - discriminated union
 const finalExamValidator = v.union(
 	v.object({
-		examStatus: v.literal("NO_FINAL"),
+		examStatus: v.literal('NO_FINAL'),
 	}),
 	v.object({
-		examStatus: v.literal("TBA_FINAL"),
+		examStatus: v.literal('TBA_FINAL'),
 	}),
 	v.object({
-		examStatus: v.literal("SCHEDULED_FINAL"),
+		examStatus: v.literal('SCHEDULED_FINAL'),
 		dayOfWeek: v.string(),
 		month: v.number(),
 		day: v.number(),
@@ -45,11 +45,11 @@ export const calendarEventValidator = v.object({
 	// Section fields
 	units: v.string(),
 	status: v.union(
-		v.literal("OPEN"),
-		v.literal("Waitl"),
-		v.literal("FULL"),
-		v.literal("NewOnly"),
-		v.literal(""),
+		v.literal('OPEN'),
+		v.literal('Waitl'),
+		v.literal('FULL'),
+		v.literal('NewOnly'),
+		v.literal(''),
 	),
 	meetings: v.array(meetingValidator),
 	finalExam: finalExamValidator,
@@ -58,18 +58,18 @@ export const calendarEventValidator = v.object({
 	maxCapacity: v.string(),
 	sectionCode: v.string(),
 	sectionType: v.union(
-		v.literal("Act"),
-		v.literal("Col"),
-		v.literal("Dis"),
-		v.literal("Fld"),
-		v.literal("Lab"),
-		v.literal("Lec"),
-		v.literal("Qiz"),
-		v.literal("Res"),
-		v.literal("Sem"),
-		v.literal("Stu"),
-		v.literal("Tap"),
-		v.literal("Tut"),
+		v.literal('Act'),
+		v.literal('Col'),
+		v.literal('Dis'),
+		v.literal('Fld'),
+		v.literal('Lab'),
+		v.literal('Lec'),
+		v.literal('Qiz'),
+		v.literal('Res'),
+		v.literal('Sem'),
+		v.literal('Stu'),
+		v.literal('Tap'),
+		v.literal('Tut'),
 	),
 	numRequested: v.string(),
 	restrictions: v.string(),
@@ -87,25 +87,25 @@ export const calendarEventValidator = v.object({
 	deptCode: v.string(),
 	deptName: v.string(),
 	courseNumber: v.string(),
-	userId: v.id("users"),
-	termId: v.id("terms"),
+	userId: v.id('users'),
+	termId: v.id('terms'),
 });
 
 export const createCalendarEvent = mutation({
 	args: {
-		event: calendarEventValidator.omit("userId"),
+		event: calendarEventValidator.omit('userId'),
 	},
 	handler: async (ctx, args) => {
 		const identity = await ctx.auth.getUserIdentity();
-		if (!identity) throw new Error("Unauthenticated call to mutation");
+		if (!identity) throw new Error('Unauthenticated call to mutation');
 
 		const user = await ctx.db
-			.query("users")
-			.withIndex("by_clerkId", (q) => q.eq("clerkId", identity.tokenIdentifier))
+			.query('users')
+			.withIndex('by_clerkId', (q) => q.eq('clerkId', identity.tokenIdentifier))
 			.unique();
-		if (!user) throw new Error("Unauthenticated call to mutation");
+		if (!user) throw new Error('Unauthenticated call to mutation');
 
-		const id = await ctx.db.insert("calendarEvents", {
+		const id = await ctx.db.insert('calendarEvents', {
 			...args.event,
 			userId: user._id,
 		});
@@ -120,26 +120,26 @@ export const getUserEvents = query({
 		if (!identity) return [];
 
 		const user = await ctx.db
-			.query("users")
-			.withIndex("by_clerkId", (q) => q.eq("clerkId", identity.tokenIdentifier))
+			.query('users')
+			.withIndex('by_clerkId', (q) => q.eq('clerkId', identity.tokenIdentifier))
 			.unique();
 
 		if (!user) return [];
 
 		// Get the active term (there will always be only 1 active term)
 		const activeTerm = await ctx.db
-			.query("terms")
-			.withIndex("by_user", (q) => q.eq("userId", user._id))
-			.filter((q) => q.eq(q.field("isActive"), true))
+			.query('terms')
+			.withIndex('by_user', (q) => q.eq('userId', user._id))
+			.filter((q) => q.eq(q.field('isActive'), true))
 			.first();
 
 		if (!activeTerm) return [];
 
 		// Filter events to only include those from the active term
 		const events = await ctx.db
-			.query("calendarEvents")
-			.filter((q) => q.eq(q.field("userId"), user._id))
-			.filter((q) => q.eq(q.field("termId"), activeTerm._id))
+			.query('calendarEvents')
+			.filter((q) => q.eq(q.field('userId'), user._id))
+			.filter((q) => q.eq(q.field('termId'), activeTerm._id))
 			.collect();
 
 		return events;
@@ -153,19 +153,19 @@ export const deleteCalendarEvent = mutation({
 	handler: async (ctx, args) => {
 		const identity = await ctx.auth.getUserIdentity();
 
-		if (!identity) throw new Error("no user detected");
+		if (!identity) throw new Error('no user detected');
 
 		const user = await ctx.db
-			.query("users")
-			.withIndex("by_clerkId", (q) => q.eq("clerkId", identity.tokenIdentifier))
+			.query('users')
+			.withIndex('by_clerkId', (q) => q.eq('clerkId', identity.tokenIdentifier))
 			.unique();
 
-		if (!user) throw new Error("no user detected");
+		if (!user) throw new Error('no user detected');
 
 		const event = await ctx.db
-			.query("calendarEvents")
-			.filter((q) => q.eq(q.field("userId"), user._id))
-			.filter((q) => q.eq(q.field("sectionCode"), args.sectionCode))
+			.query('calendarEvents')
+			.filter((q) => q.eq(q.field('userId'), user._id))
+			.filter((q) => q.eq(q.field('sectionCode'), args.sectionCode))
 			.first();
 		if (event) {
 			await ctx.db.delete(event._id);
