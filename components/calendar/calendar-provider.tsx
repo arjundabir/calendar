@@ -1,12 +1,7 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  ReactNode,
-  useState,
-  useEffect,
-} from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
 import {
   Navbar,
@@ -37,9 +32,9 @@ import {
   DropdownMenu,
   DropdownSection,
 } from '../dropdown';
-import { paths } from '@/types/anteater-api-types';
+import type { paths } from '@/types/anteater-api-types';
 import { api } from '@/convex/_generated/api';
-import { Doc } from '@/convex/_generated/dataModel';
+import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { Input } from '../input';
 import { useStoreUserEffect } from '@/hooks/useStoreUserEffect';
 
@@ -53,11 +48,12 @@ type WebSocCourse =
 type WebSocDepartment = WebSocData['schools'][number]['departments'][number];
 type Calendar =
   paths['/v2/rest/calendar']['get']['responses'][200]['content']['application/json']['data'];
-
+type Term = Doc<'terms'>;
 export interface CalendarEvents extends WebSocSection {
   deptCode: WebSocCourse['deptCode'];
   courseNumber: WebSocCourse['courseNumber'];
   deptName: WebSocDepartment['deptName'];
+  termId: string;
 }
 
 type CalendarContextType = {
@@ -91,17 +87,23 @@ export function CalendarProvider({
   const [calendarEvents, setCalendarEvents] = useLocalStorage<
     CalendarContextType['calendarEvents']
   >('calendar', []);
+  const [termsLocalStorage, setTermsLocalStorage] = useLocalStorage<Term[]>(
+    'terms',
+    []
+  );
 
   function removeCalendarEvent(sectionCode: string): void {
     setCalendarEvents(
       calendarEvents.filter((event) => event.sectionCode !== sectionCode)
     );
   }
+  const { isAuthenticated } = useStoreUserEffect();
   const terms = useQuery(api.term.getTerms);
-  const activeTerm = terms?.find((term) => term.isActive);
+  const activeTerm = isAuthenticated
+    ? terms?.find((term) => term.isActive)
+    : termsLocalStorage.find((term) => term.isActive);
   const [isCreatingNewCalendar, setIsCreatingNewCalendar] =
     useState<boolean>(false);
-  const { isAuthenticated } = useStoreUserEffect();
 
   const deleteTerm = useMutation(api.term.deleteTerm).withOptimisticUpdate(
     (localStore, args) => {
@@ -126,7 +128,7 @@ export function CalendarProvider({
       updatedTerms.push({
         _id: `temp_${args.name}` as (typeof terms)[0]['_id'],
         _creationTime: 0,
-        userId: '',
+        userId: { __tableName: 'users' } as (typeof terms)[0]['userId'],
         termName: args.name,
         isActive: true,
       });
@@ -136,15 +138,43 @@ export function CalendarProvider({
   );
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      const termName = `${latestTerm.quarter} ${latestTerm.year}`;
+      const termAlreadyExists = termsLocalStorage.some(
+        (t) => t.termName === termName
+      );
+      if (!termAlreadyExists) {
+        const newTerm: Term = {
+          _id: `local_${Date.now()}_${termName}` as Doc<'terms'>['_id'],
+          _creationTime: Date.now(),
+          userId: 'local' as Id<'users'>,
+          termName,
+          isActive: true,
+        };
+        setTermsLocalStorage([
+          ...termsLocalStorage.map((term) => ({ ...term, isActive: false })),
+          newTerm,
+        ]);
+      }
+      return;
+    }
+
     if (!terms) return;
-    if (!isAuthenticated) return;
 
     const termName = `${latestTerm.quarter} ${latestTerm.year}`;
     const termAlreadyExists = terms?.some((t) => t.termName === termName);
     if (!termAlreadyExists) {
       createTerm({ name: termName });
     }
-  }, [isAuthenticated, latestTerm.year, latestTerm.quarter, terms]);
+  }, [
+    createTerm,
+    isAuthenticated,
+    latestTerm.year,
+    latestTerm.quarter,
+    terms,
+    termsLocalStorage,
+    setTermsLocalStorage,
+  ]);
 
   const setActive = useMutation(api.term.setActiveTerm).withOptimisticUpdate(
     (localStore, args) => {
@@ -176,77 +206,81 @@ export function CalendarProvider({
               <ChevronDownIcon />
             </DropdownButton>
             <DropdownMenu>
-              <SignUpButton mode="modal">
-                <DropdownItem>New Calendar&hellip;</DropdownItem>
-              </SignUpButton>
+              <DropdownSection>
+                {termsLocalStorage.map((term) => (
+                  <DropdownItem key={term._id}>
+                    {term.termName}
+                    {term.isActive && <CheckIcon />}
+                  </DropdownItem>
+                ))}
+              </DropdownSection>
+              <DropdownDivider />
+              <DropdownSection>
+                <SignUpButton mode="modal">
+                  <DropdownItem>New Calendar&hellip;</DropdownItem>
+                </SignUpButton>
+              </DropdownSection>
             </DropdownMenu>
           </Dropdown>
         </Unauthenticated>
         <Authenticated>
           <Dropdown>
-            {({ open }) => {
-              if (isCreatingNewCalendar && open)
-                setIsCreatingNewCalendar(false);
-              return (
-                <>
-                  <DropdownButton as={NavbarItem}>
-                    <NavbarLabel>{activeTerm?.termName}</NavbarLabel>
-                    <ChevronDownIcon />
-                  </DropdownButton>
-                  <DropdownMenu className="min-w-64" anchor="bottom start">
-                    <DropdownSection>
-                      {terms?.map((term) => (
-                        <DropdownItem
-                          key={term._id}
-                          value={term.termName}
-                          onClick={() => {
-                            setActive({ id: term._id });
-                          }}
-                        >
-                          <DropdownLabel>{term.termName}</DropdownLabel>
-                          {term.isActive && <CheckIcon />}
-                          <TrashIcon
-                            className="col-start-6! row-start-1! hover:text-red-400!"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteTerm({ id: term._id });
-                            }}
-                          />
-                        </DropdownItem>
-                      ))}
-                      {isCreatingNewCalendar && (
-                        <Input
-                          placeholder="Enter new calendar name"
-                          className="col-span-full"
-                          autoFocus
-                          onKeyDown={(e) => {
-                            e.stopPropagation();
-                            if (e.key === 'Enter') {
-                              const name = (e.target as HTMLInputElement).value;
-                              if (name) {
-                                createTerm({ name });
-                                setIsCreatingNewCalendar(false);
-                              }
-                            }
-                          }}
-                        />
-                      )}
-                    </DropdownSection>
-                    <DropdownDivider />
-                    <DropdownSection>
-                      <DropdownItem
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setIsCreatingNewCalendar((prev) => !prev);
-                        }}
-                      >
-                        New calendar&hellip;
-                      </DropdownItem>
-                    </DropdownSection>
-                  </DropdownMenu>
-                </>
-              );
-            }}
+            <DropdownButton as={NavbarItem}>
+              <NavbarLabel>{activeTerm?.termName}</NavbarLabel>
+              <ChevronDownIcon />
+            </DropdownButton>
+            <DropdownMenu className="min-w-64" anchor="bottom start">
+              <DropdownSection>
+                {terms?.map((term) => (
+                  <DropdownItem
+                    key={term._id}
+                    value={term.termName}
+                    onClick={() => {
+                      setActive({ id: term._id });
+                    }}
+                  >
+                    <DropdownLabel>{term.termName}</DropdownLabel>
+                    {term.isActive && <CheckIcon />}
+                    <TrashIcon
+                      className="col-start-6! row-start-1! hover:text-red-400!"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteTerm({ id: term._id });
+                      }}
+                    />
+                  </DropdownItem>
+                ))}
+                {isCreatingNewCalendar && (
+                  <Input
+                    placeholder="Enter new calendar name"
+                    className="col-span-full"
+                    autoFocus
+                    onBlur={() => setIsCreatingNewCalendar(false)}
+                    onKeyDown={(e) => {
+                      e.stopPropagation();
+                      if (e.key === 'Enter') {
+                        const name = (e.target as HTMLInputElement).value;
+                        if (name) {
+                          createTerm({ name });
+                          setIsCreatingNewCalendar(false);
+                        }
+                      }
+                    }}
+                  />
+                )}
+              </DropdownSection>
+              <DropdownDivider />
+              <DropdownSection>
+                <DropdownItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsCreatingNewCalendar((prev) => !prev);
+                  }}
+                >
+                  New calendar&hellip;
+                </DropdownItem>
+              </DropdownSection>
+            </DropdownMenu>
           </Dropdown>
         </Authenticated>
         <NavbarSpacer />

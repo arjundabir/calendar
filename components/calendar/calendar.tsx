@@ -7,13 +7,15 @@ import { Authenticated, Unauthenticated, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
 export default function Calendar() {
-  const { calendarEvents } = useCalendarContext();
+  const { calendarEvents, activeTerm } = useCalendarContext();
   const dbCalendarEvents = useQuery(api.calendar.getUserEvents);
 
   const dbCalendarEventsNoUserId =
     dbCalendarEvents?.map(({ userId: _, ...rest }) => rest) ?? [];
 
-  const transformedEvents = transformCalendarEvents(calendarEvents);
+  const transformedEvents = transformCalendarEvents(
+    calendarEvents.filter((event) => event.termId === activeTerm?._id)
+  );
   const transformedDbEvents = transformCalendarEvents(dbCalendarEventsNoUserId);
 
   return (

@@ -325,16 +325,11 @@ export default function SearchForm({
                                                   courseNumber:
                                                     course.courseNumber,
                                                   deptName: department.deptName,
+                                                  termId: activeTerm!._id,
                                                 };
                                                 if (isSignedIn) {
-                                                  const calendarEventWithTermId =
-                                                    {
-                                                      ...calendarEvent,
-                                                      termId: activeTerm!._id,
-                                                    };
                                                   addToCalendarDb({
-                                                    event:
-                                                      calendarEventWithTermId,
+                                                    event: calendarEvent,
                                                   });
                                                 }
                                               }}
@@ -377,16 +372,11 @@ export default function SearchForm({
                                                   courseNumber:
                                                     course.courseNumber,
                                                   deptName: department.deptName,
+                                                  termId: activeTerm!._id,
                                                 };
                                                 if (isSignedIn) {
-                                                  const calendarEventWithUserId =
-                                                    {
-                                                      ...calendarEvent,
-                                                      termId: activeTerm!._id,
-                                                    };
                                                   addToCalendarDb({
-                                                    event:
-                                                      calendarEventWithUserId,
+                                                    event: calendarEvent,
                                                   });
                                                 } else {
                                                   setCalendarEvents([

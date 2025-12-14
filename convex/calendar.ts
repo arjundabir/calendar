@@ -126,10 +126,22 @@ export const getUserEvents = query({
 
 		if (!user) return [];
 
+		// Get the active term (there will always be only 1 active term)
+		const activeTerm = await ctx.db
+			.query("terms")
+			.withIndex("by_user", (q) => q.eq("userId", user._id))
+			.filter((q) => q.eq(q.field("isActive"), true))
+			.first();
+
+		if (!activeTerm) return [];
+
+		// Filter events to only include those from the active term
 		const events = await ctx.db
 			.query("calendarEvents")
 			.filter((q) => q.eq(q.field("userId"), user._id))
+			.filter((q) => q.eq(q.field("termId"), activeTerm._id))
 			.collect();
+
 		return events;
 	},
 });
