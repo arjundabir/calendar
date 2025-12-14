@@ -1,74 +1,78 @@
-import {
-  WebSocTermsResponseSchema,
-  WebSocQueryResponseSchema,
-  QueryWebSocParams,
-} from '@/types/websoc';
+import { paths } from '@/types/anteater-api-types';
+import createClient from 'openapi-fetch';
 
-const ANTEATER_API_URL = new URL('https://anteaterapi.com/v2/rest');
-const ANTEATER_WEBSOC_URL = ANTEATER_API_URL + "/websoc"
-const ANTEATER_TERMS_URL = ANTEATER_WEBSOC_URL + "/terms"
+const client = createClient<paths>({ baseUrl: 'https://anteaterapi.com' });
 
 async function getWebSocTerms() {
-  const response = await fetch(ANTEATER_TERMS_URL);
-  const result = await response.json();
-  const parsed = WebSocTermsResponseSchema.parse(result);
+  const { data, error } = await client.GET('/v2/rest/websoc/terms');
+  // In anteater-api-types, error object has ok: false if there was an error.
+  if (error) return [];
 
-  if (parsed.ok) return parsed.data;
-  throw new Error(ANTEATER_TERMS_URL.toString());
+  return data.data;
 }
+
+type QueryWebSocParams = paths['/v2/rest/websoc']['get']['parameters']['query'];
 
 async function queryWebSoc(params: QueryWebSocParams) {
-  const url = new URL(ANTEATER_WEBSOC_URL);
-
-  // Add required parameters
-  url.searchParams.append('year', params.year);
-  url.searchParams.append('quarter', params.quarter);
-
-  // Add optional parameters
-  if (params.ge) url.searchParams.append('ge', params.ge);
-  if (params.department) url.searchParams.append('department', params.department);
-  if (params.courseTitle) url.searchParams.append('courseTitle', params.courseTitle);
-  if (params.courseNumber)
-    url.searchParams.append('courseNumber', params.courseNumber);
-  if (params.sectionCodes)
-    url.searchParams.append('sectionCodes', params.sectionCodes);
-  if (params.instructorName)
-    url.searchParams.append('instructorName', params.instructorName);
-  if (params.days) url.searchParams.append('days', params.days);
-  if (params.building) url.searchParams.append('building', params.building);
-  if (params.room) url.searchParams.append('room', params.room);
-  if (params.division) url.searchParams.append('division', params.division);
-  if (params.sectionType)
-    url.searchParams.append('sectionType', params.sectionType);
-  if (params.fullCourses)
-    url.searchParams.append('fullCourses', params.fullCourses);
-  if (params.cancelledCourses)
-    url.searchParams.append('cancelledCourses', params.cancelledCourses);
-  if (params.units) url.searchParams.append('units', params.units);
-  if (params.startTime) url.searchParams.append('startTime', params.startTime);
-  if (params.endTime) url.searchParams.append('endTime', params.endTime);
-  if (params.excludeRestrictionCodes)
-    url.searchParams.append(
-      'excludeRestrictionCodes',
-      params.excludeRestrictionCodes
-    );
-  if (params.includeRelatedCourses !== undefined) {
-    if (params.includeRelatedCourses !== null) {
-      url.searchParams.append(
-        'includeRelatedCourses',
-        params.includeRelatedCourses
-      );
-    } else {
-      url.searchParams.append('includeRelatedCourses', '');
-    }
-  }
-
-  const response = await fetch(url.toString());
-  const result = await response.json();
-  const parsed = WebSocQueryResponseSchema.parse(result);
-
-  if (parsed.ok) return parsed.data;
-  else throw new Error(parsed.message);
+  const { data, error } = await client.GET('/v2/rest/websoc', {
+    cache: 'force-cache',
+    next: { revalidate: 60 * 60 },
+    params: {
+      query: {
+        year: params.year,
+        quarter: params.quarter,
+        ...(params.ge ? { ge: params.ge } : {}),
+        ...(params.department ? { department: params.department } : {}),
+        ...(params.courseTitle ? { courseTitle: params.courseTitle } : {}),
+        ...(params.courseNumber ? { courseNumber: params.courseNumber } : {}),
+        ...(params.sectionCodes ? { sectionCodes: params.sectionCodes } : {}),
+        ...(params.instructorName
+          ? { instructorName: params.instructorName }
+          : {}),
+        ...(params.days ? { days: params.days } : {}),
+        ...(params.building ? { building: params.building } : {}),
+        ...(params.room ? { room: params.room } : {}),
+        ...(params.division ? { division: params.division } : {}),
+        ...(params.sectionType ? { sectionType: params.sectionType } : {}),
+        ...(params.fullCourses ? { fullCourses: params.fullCourses } : {}),
+        ...(params.cancelledCourses
+          ? { cancelledCourses: params.cancelledCourses }
+          : {}),
+        ...(params.units ? { units: params.units } : {}),
+        ...(params.startTime ? { startTime: params.startTime } : {}),
+        ...(params.endTime ? { endTime: params.endTime } : {}),
+        ...(params.excludeRestrictionCodes
+          ? { excludeRestrictionCodes: params.excludeRestrictionCodes }
+          : {}),
+        ...(params.includeRelatedCourses
+          ? { includeRelatedCourses: params.includeRelatedCourses }
+          : {}),
+      },
+    },
+  });
+  if (error) return [];
+  return data.data;
 }
 
-export { getWebSocTerms, queryWebSoc};
+async function listAllCalendars() {
+  const { data, error } = await client.GET('/v2/rest/calendar/all', {
+    cache: 'force-cache',
+    next: { revalidate: 60 * 60 * 24 * 30 },
+  });
+  if (error) return [];
+  return data.data;
+}
+
+async function retrieveCurrentWeek() {
+  const { data, error } = await client.GET('/v2/rest/week', {
+    params: { query: { year: '2026', month: 1, day: 5 } },
+    // cache: 'force-cache',
+    // next: { revalidate: 60 * 60 },
+  });
+
+  if (error) return [];
+
+  return data.data;
+}
+
+export { getWebSocTerms, queryWebSoc, retrieveCurrentWeek, listAllCalendars };
