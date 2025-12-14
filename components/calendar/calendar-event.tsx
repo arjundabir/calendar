@@ -272,7 +272,7 @@ function CalendarEvent({
     F: 5,
   };
   const formatTime = (time: number) => (time % 12 === 0 ? 12 : time % 12);
-  const meridiem = (hour: number) => (hour % 12 > 0 ? 'AM' : 'PM');
+  const meridiem = (hour: number) => (hour >= 12 ? 'PM' : 'AM');
   const formatDayOfWeek = (day: CalendarEventType['dayOfWeek']) => {
     switch (day) {
       case 'M':
