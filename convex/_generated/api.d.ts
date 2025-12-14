@@ -12,7 +12,9 @@ import type * as auth from "../auth.js";
 import type * as calendar from "../calendar.js";
 import type * as http from "../http.js";
 import type * as tables_term from "../tables/term.js";
+import type * as tables_user from "../tables/user.js";
 import type * as term from "../term.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -25,7 +27,9 @@ declare const fullApi: ApiFromModules<{
   calendar: typeof calendar;
   http: typeof http;
   "tables/term": typeof tables_term;
+  "tables/user": typeof tables_user;
   term: typeof term;
+  users: typeof users;
 }>;
 
 /**

@@ -7,23 +7,16 @@ import { getWebSocTerms, listAllCalendars } from './actions';
 import { AddedCourses } from '@/components/calendar/added-courses';
 import fs from 'fs';
 import { getLatestSocAvailable } from '@/lib/calendar/terms-helper';
-import { api } from '@/convex/_generated/api';
-import { preloadQuery } from 'convex/nextjs';
 
 export default async function Home() {
-  const [websocTerms, coursesIndex, allCalendars, preloadTerms] =
-    await Promise.all([
-      getWebSocTerms(),
-      fs.promises.readFile(process.cwd() + '/public/course-index.json', 'utf8'),
-      listAllCalendars(),
-      preloadQuery(api.term.getTerms),
-    ]);
+  const [websocTerms, coursesIndex, allCalendars] = await Promise.all([
+    getWebSocTerms(),
+    fs.promises.readFile(process.cwd() + '/public/course-index.json', 'utf8'),
+    listAllCalendars(),
+  ]);
 
   return (
-    <CalendarProvider
-      latestTerm={getLatestSocAvailable(allCalendars)}
-      preloadTerms={preloadTerms}
-    >
+    <CalendarProvider latestTerm={getLatestSocAvailable(allCalendars)}>
       <div className="grid grid-cols-2 h-[calc(100svh-56px)]">
         <section className="border-r border-gray-100">
           <Calendar />
