@@ -92,11 +92,23 @@ export const calendarEventValidator = v.object({
 
 export const createCalendarEvent = mutation({
     args: {
-        event: calendarEventValidator,
+        event: calendarEventValidator.omit("userId"),
     },
     handler: async (ctx, args) => {
-        const id = await ctx.db.insert("calendarEvents", args.event);
-        return id;
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) throw new Error('Unauthenticated call to mutation');
+  
+      const user = await ctx.db
+        .query('users')
+        .withIndex('by_clerkId', (q) => q.eq('clerkId', identity.tokenIdentifier))
+        .unique();
+      if (!user) throw new Error('Unauthenticated call to mutation');
+  
+      const id = await ctx.db.insert('calendarEvents', {
+        ...args.event,
+        userId: user._id,
+      });
+      return id;  
     }
 })
 

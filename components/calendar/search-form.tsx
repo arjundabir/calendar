@@ -63,8 +63,8 @@ export default function SearchForm({
   const [webSocData, setWebSocData] = useState<WebSocData | null>(null);
   const { tabs } = useTabContext();
 
-  const { user, isSignedIn } = useUser();
-  const { calendarEvents, setCalendarEvents, removeCalendarEvent } =
+  const { isSignedIn } = useUser();
+  const { calendarEvents, setCalendarEvents, removeCalendarEvent, activeTerm } =
     useCalendarContext();
 
   const initialValues: SearchCourseType = {
@@ -330,7 +330,7 @@ export default function SearchForm({
                                                   const calendarEventWithUserId =
                                                     {
                                                       ...calendarEvent,
-                                                      userId: user.id,
+                                                      termId: activeTerm!._id,
                                                     };
                                                   addToCalendarDb({
                                                     event:
@@ -382,7 +382,7 @@ export default function SearchForm({
                                                   const calendarEventWithUserId =
                                                     {
                                                       ...calendarEvent,
-                                                      userId: user.id,
+                                                      termId: activeTerm!._id,
                                                     };
                                                   addToCalendarDb({
                                                     event:
