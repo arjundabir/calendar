@@ -5,13 +5,13 @@ import { TabProvider } from '@/components/calendar/tab-context';
 import { CalendarProvider } from '@/components/calendar/calendar-provider';
 import { getWebSocTerms, listAllCalendars } from './actions';
 import { AddedCourses } from '@/components/calendar/added-courses';
-import fs from 'fs';
+import fs from 'node:fs';
 import { getLatestSocAvailable } from '@/lib/calendar/terms-helper';
 
 export default async function Home() {
   const [websocTerms, coursesIndex, allCalendars] = await Promise.all([
     getWebSocTerms(),
-    fs.promises.readFile(process.cwd() + '/public/course-index.json', 'utf8'),
+    fs.promises.readFile(`${process.cwd()}/public/course-index.json`, 'utf8'),
     listAllCalendars(),
   ]);
 
