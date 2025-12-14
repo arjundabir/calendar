@@ -327,14 +327,14 @@ export default function SearchForm({
                                                   deptName: department.deptName,
                                                 };
                                                 if (isSignedIn) {
-                                                  const calendarEventWithUserId =
+                                                  const calendarEventWithTermId =
                                                     {
                                                       ...calendarEvent,
                                                       termId: activeTerm!._id,
                                                     };
                                                   addToCalendarDb({
                                                     event:
-                                                      calendarEventWithUserId,
+                                                      calendarEventWithTermId,
                                                   });
                                                 }
                                               }}

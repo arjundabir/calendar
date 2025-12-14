@@ -2,7 +2,7 @@ import { defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
 export const termsTable = defineTable({
-  userId: v.string(),
+  userId: v.id("users"),
   termName: v.string(),
   isActive: v.boolean(),
 })
