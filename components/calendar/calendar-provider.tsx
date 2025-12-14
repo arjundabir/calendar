@@ -65,16 +65,15 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
         <NavbarSection>
           <Unauthenticated>
             <SignInButton>
-              <Button color="dark">Login / Sign up</Button>
+              <NavbarItem>Login / Sign up</NavbarItem>
             </SignInButton>
           </Unauthenticated>
           <Authenticated>
             <UserButton />
           </Authenticated>
           <AuthLoading>
-            <p>Still loading</p>
+            <div className="size-7 animate-pulse bg-gray-200 rounded-full" />
           </AuthLoading>
-          <NavbarDivider />
         </NavbarSection>
       </Navbar>
       {children}
