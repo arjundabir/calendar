@@ -4,15 +4,6 @@ import { Button } from '../button';
 import type { paths } from '@/types/anteater-api-types';
 import { Select } from '@/components/select';
 import z from 'zod';
-
-type Term =
-  paths['/v2/rest/websoc/terms']['get']['responses'][200]['content']['application/json']['data'][number];
-type WebSocEndpoint = paths['/v2/rest/websoc']['get'];
-type WebSocData =
-  WebSocEndpoint['responses'][200]['content']['application/json']['data'];
-type WebSocQuarter = NonNullable<
-  WebSocEndpoint['parameters']['query']
->['quarter'];
 import { useForm, Controller } from 'react-hook-form';
 import { queryWebSoc } from '@/app/actions';
 import { Fragment, useState } from 'react';
@@ -46,6 +37,15 @@ import { useUser } from '@clerk/nextjs';
 import { useTabContext } from './tab-context';
 import { Combobox, ComboboxLabel, ComboboxOption } from '../combobox';
 import { CourseIndex } from '@/app/api/cron/index-courses/route';
+
+type Term =
+  paths['/v2/rest/websoc/terms']['get']['responses'][200]['content']['application/json']['data'][number];
+type WebSocEndpoint = paths['/v2/rest/websoc']['get'];
+type WebSocData =
+  WebSocEndpoint['responses'][200]['content']['application/json']['data'];
+type WebSocQuarter = NonNullable<
+  WebSocEndpoint['parameters']['query']
+>['quarter'];
 
 const searchCourseSchema = z.object({
   term: z.string(),
