@@ -14,7 +14,7 @@ import {
 import {
   Authenticated,
   AuthLoading,
-  Preloaded,
+  type Preloaded,
   Unauthenticated,
   useMutation,
   usePreloadedQuery,
@@ -39,7 +39,7 @@ import { api } from '@/convex/_generated/api';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { Input } from '../input';
 import { useStoreUserEffect } from '@/hooks/useStoreUserEffect';
-import { Button } from '../button';
+import ShareModal from '../share-modal';
 
 // Navigate through the nested websoc response structure to get the correct types
 type WebSocData =
@@ -98,6 +98,7 @@ export function CalendarProvider({
     []
   );
   const [isFinalsSchedule, setIsFinalsSchedule] = useState<boolean>(false);
+  const [isDialogOpen, setDialogOpen] = useState<boolean>(false);
 
   function removeCalendarEvent(sectionCode: string): void {
     setCalendarEvents(
@@ -323,6 +324,8 @@ export function CalendarProvider({
             </SignInButton>
           </Unauthenticated>
           <Authenticated>
+            <NavbarItem onClick={() => setDialogOpen(true)}>Share</NavbarItem>
+            <ShareModal open={isDialogOpen} onClose={setDialogOpen} />
             <UserButton />
           </Authenticated>
           <AuthLoading>
