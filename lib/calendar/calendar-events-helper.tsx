@@ -143,7 +143,10 @@ function parseFinalDayOfWeek(day: string): 'M' | 'T' | 'W' | 'Th' | 'F' | null {
 }
 
 // Transform calendarEvents into CalendarEvent components
-function transformCalendarEvents(calendarEvents: CalendarEvents[]) {
+function transformCalendarEvents(
+  calendarEvents: CalendarEvents[],
+  overrideColor?: ReturnType<typeof getColorForDept>
+) {
   // First pass: collect all event data
   type EventData = {
     dayOfWeek: 'M' | 'T' | 'W' | 'Th' | 'F';
@@ -198,7 +201,7 @@ function transformCalendarEvents(calendarEvents: CalendarEvents[]) {
           dayOfWeek,
           startTime: { hour: startHour, minute: startMinute % 60 },
           endTime: { hour: endHour, minute: endMinute % 60 },
-          color,
+          color: overrideColor ?? color,
           deptCode: calendarEvent.deptCode,
           courseNumber: calendarEvent.courseNumber,
           sectionType: calendarEvent.sectionType,
@@ -275,7 +278,10 @@ function transformCalendarEvents(calendarEvents: CalendarEvents[]) {
 }
 
 // Transform calendarEvents into CalendarEvent components for finals schedule
-function transformFinalsEvents(calendarEvents: CalendarEvents[]) {
+function transformFinalsEvents(
+  calendarEvents: CalendarEvents[],
+  overrideColor?: ReturnType<typeof getColorForDept>
+) {
   // First pass: collect all final exam event data
   type EventData = {
     dayOfWeek: 'M' | 'T' | 'W' | 'Th' | 'F';
@@ -296,9 +302,7 @@ function transformFinalsEvents(calendarEvents: CalendarEvents[]) {
 
   calendarEvents.forEach((calendarEvent, eventIndex) => {
     // Only process events with scheduled finals
-    if (
-      calendarEvent.finalExam.examStatus !== 'SCHEDULED_FINAL'
-    ) {
+    if (calendarEvent.finalExam.examStatus !== 'SCHEDULED_FINAL') {
       return;
     }
 
@@ -334,7 +338,7 @@ function transformFinalsEvents(calendarEvents: CalendarEvents[]) {
       dayOfWeek,
       startTime: { hour: startHour, minute: startMinute % 60 },
       endTime: { hour: endHour, minute: endMinute % 60 },
-      color,
+      color: overrideColor ?? color,
       deptCode: calendarEvent.deptCode,
       courseNumber: calendarEvent.courseNumber,
       sectionType: calendarEvent.sectionType,
@@ -408,4 +412,9 @@ function transformFinalsEvents(calendarEvents: CalendarEvents[]) {
   return events;
 }
 
-export { parseDays, getColorForDept, transformCalendarEvents, transformFinalsEvents };
+export {
+  parseDays,
+  getColorForDept,
+  transformCalendarEvents,
+  transformFinalsEvents,
+};
