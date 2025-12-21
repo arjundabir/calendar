@@ -6,7 +6,7 @@ import { Select } from '@/components/select';
 import z from 'zod';
 import { useForm, Controller } from 'react-hook-form';
 import { queryWebSoc } from '@/app/actions';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -53,14 +53,23 @@ const searchCourseSchema = z.object({
 });
 type SearchCourseType = z.infer<typeof searchCourseSchema>;
 
-export default function SearchForm({
-  websocTerms,
-  coursesIndex,
-}: {
-  websocTerms: Term[];
-  coursesIndex: CourseIndex[];
-}) {
+export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
   const [webSocData, setWebSocData] = useState<WebSocData | null>(null);
+  const [coursesIndex, setCoursesIndex] = useState<CourseIndex[]>([]);
+
+  useEffect(() => {
+    async function getCoursesIndex() {
+      const response = await fetch('/api/search/suggestions', {
+        cache: 'force-cache',
+        next: {
+          revalidate: 60 * 60 * 24 * 30,
+        },
+      });
+      const coursesIndex = (await response.json()) as CourseIndex[];
+      setCoursesIndex(coursesIndex);
+    }
+    getCoursesIndex();
+  }, []);
   const { tabs } = useTabContext();
 
   const { isSignedIn } = useUser();
@@ -72,7 +81,7 @@ export default function SearchForm({
     course: '',
   };
 
-  const { handleSubmit, register, control } = useForm({
+  const { handleSubmit, control } = useForm({
     defaultValues: initialValues,
   });
 
