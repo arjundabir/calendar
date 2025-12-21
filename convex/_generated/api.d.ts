@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as calendar from "../calendar.js";
 import type * as http from "../http.js";
+import type * as share from "../share.js";
 import type * as tables_shares from "../tables/shares.js";
 import type * as tables_term from "../tables/term.js";
 import type * as tables_user from "../tables/user.js";
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   calendar: typeof calendar;
   http: typeof http;
+  share: typeof share;
   "tables/shares": typeof tables_shares;
   "tables/term": typeof tables_term;
   "tables/user": typeof tables_user;

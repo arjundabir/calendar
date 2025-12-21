@@ -5,6 +5,7 @@ export const sharesTable = defineTable({
 	termId: v.id('terms'),
 	sharedWithUserId: v.id('users'),
 	ownerId: v.id('users'),
+	show: v.boolean(),
 })
 	.index('by_sharedWithUser', ['sharedWithUserId'])
 	.index('by_term', ['termId']);
