@@ -12,6 +12,7 @@ import { useCalendarContext } from './calendar-provider';
 export default function Calendar() {
   const { calendarEvents, activeTerm, isFinalsSchedule } = useCalendarContext();
   const dbCalendarEvents = useQuery(api.calendar.getUserEvents);
+  const sharedCalendarEvents = useQuery(api.share.getSharedCalendarEvents);
 
   const dbCalendarEventsNoUserId =
     dbCalendarEvents?.map(({ userId: _, ...rest }) => rest) ?? [];
@@ -19,7 +20,10 @@ export default function Calendar() {
   const transformedEvents = transformCalendarEvents(
     calendarEvents.filter((event) => event.termId === activeTerm?._id)
   );
-  const transformedDbEvents = transformCalendarEvents(dbCalendarEventsNoUserId);
+  const transformedDbEvents = transformCalendarEvents([
+    ...dbCalendarEventsNoUserId,
+    ...(sharedCalendarEvents?.map(({ userId: _, ...rest }) => rest) ?? []),
+  ]);
 
   const transformedFinalsEvents = transformFinalsEvents(
     calendarEvents.filter((event) => event.termId === activeTerm?._id)
@@ -107,7 +111,9 @@ export default function Calendar() {
                     : transformedDbEvents}
                 </Authenticated>
                 <Unauthenticated>
-                  {isFinalsSchedule ? transformedFinalsEvents : transformedEvents}
+                  {isFinalsSchedule
+                    ? transformedFinalsEvents
+                    : transformedEvents}
                 </Unauthenticated>
               </CalendarList>
             </div>

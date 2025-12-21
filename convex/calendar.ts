@@ -172,3 +172,23 @@ export const deleteCalendarEvent = mutation({
 		}
 	},
 });
+
+export const getCalendarEventsByTermIds = query({
+	args: {
+		termIds: v.array(v.id('terms')),
+	},
+	handler: async (ctx, args) => {
+		if (args.termIds.length === 0) return [];
+
+		const allEvents = await Promise.all(
+			args.termIds.map((termId) =>
+				ctx.db
+					.query('calendarEvents')
+					.filter((q) => q.eq(q.field('termId'), termId))
+					.collect(),
+			),
+		);
+
+		return allEvents.flat();
+	},
+});

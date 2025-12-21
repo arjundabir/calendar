@@ -3,14 +3,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
-import {
-  Navbar,
-  NavbarDivider,
-  NavbarItem,
-  NavbarLabel,
-  NavbarSection,
-  NavbarSpacer,
-} from '../navbar';
+import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from '../navbar';
 import {
   Authenticated,
   AuthLoading,
@@ -18,28 +11,26 @@ import {
   Unauthenticated,
   useMutation,
   usePreloadedQuery,
+  useQuery,
 } from 'convex/react';
 import { SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  TrashIcon,
-} from '@heroicons/react/24/solid';
-import {
-  Dropdown,
-  DropdownButton,
-  DropdownDivider,
-  DropdownItem,
-  DropdownLabel,
-  DropdownMenu,
-  DropdownSection,
-} from '../dropdown';
+import { TrashIcon, CalendarIcon, PlusIcon } from '@heroicons/react/24/solid';
 import type { paths } from '@/types/anteater-api-types';
 import { api } from '@/convex/_generated/api';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { Input } from '../input';
 import { useStoreUserEffect } from '@/hooks/useStoreUserEffect';
 import ShareModal from '../share-modal';
+import {
+  Sidebar,
+  SidebarBody,
+  SidebarHeading,
+  SidebarItem,
+  SidebarLabel,
+  SidebarSection,
+} from '../sidebar';
+import { Checkbox, CheckboxField, CheckboxGroup } from '../checkbox';
+import { Description } from '../fieldset';
 
 // Navigate through the nested websoc response structure to get the correct types
 type WebSocData =
@@ -112,6 +103,8 @@ export function CalendarProvider({
     : termsLocalStorage.find((term) => term.isActive);
   const [isCreatingNewCalendar, setIsCreatingNewCalendar] =
     useState<boolean>(false);
+  const sharedTerms = useQuery(api.term.getTermsSharedWithMe);
+  const setShareVisibility = useMutation(api.share.setShareVisibility);
 
   const deleteTerm = useMutation(api.term.deleteTerm).withOptimisticUpdate(
     (localStore, args) => {
@@ -207,72 +200,41 @@ export function CalendarProvider({
         isFinalsSchedule,
       }}
     >
-      <Navbar className="px-2!">
-        <NavbarSection>
-          <AuthLoading>
-            <Dropdown>
-              <DropdownButton as={NavbarItem} disabled>
-                Loading
-                <ChevronDownIcon />
-              </DropdownButton>
-              <DropdownMenu />
-            </Dropdown>
-          </AuthLoading>
-          <Unauthenticated>
-            <Dropdown>
-              <DropdownButton as={NavbarItem}>
-                {latestTerm.quarter} {latestTerm.year}
-                <ChevronDownIcon />
-              </DropdownButton>
-              <DropdownMenu>
-                <DropdownSection>
-                  {termsLocalStorage.map((term) => (
-                    <DropdownItem key={term._id}>
-                      {term.termName}
-                      {term.isActive && <CheckIcon />}
-                    </DropdownItem>
-                  ))}
-                </DropdownSection>
-                <DropdownDivider />
-                <DropdownSection>
-                  <SignUpButton mode="modal">
-                    <DropdownItem>New Calendar&hellip;</DropdownItem>
-                  </SignUpButton>
-                </DropdownSection>
-              </DropdownMenu>
-            </Dropdown>
-          </Unauthenticated>
-          <Authenticated>
-            <Dropdown>
-              <DropdownButton as={NavbarItem}>
-                <NavbarLabel>{activeTerm?.termName}</NavbarLabel>
-                <ChevronDownIcon />
-              </DropdownButton>
-              <DropdownMenu className="min-w-64" anchor="bottom start">
-                <DropdownSection>
-                  {terms?.map((term) => (
-                    <DropdownItem
-                      key={term._id}
-                      value={term.termName}
-                      onClick={() => {
-                        setActive({ id: term._id });
+      <div className="grid grid-cols-[256px_1fr]">
+        <Sidebar>
+          <SidebarBody>
+            <SidebarSection>
+              <SidebarItem href="/">
+                <CalendarIcon />
+                <SidebarLabel>Calendar by Zotsites</SidebarLabel>
+              </SidebarItem>
+            </SidebarSection>
+            <SidebarSection>
+              <SidebarHeading>My Calendars</SidebarHeading>
+              <Authenticated>
+                {terms?.map((term) => (
+                  <SidebarItem
+                    key={term._id}
+                    onClick={() => {
+                      setActive({ id: term._id });
+                    }}
+                  >
+                    <Checkbox checked={term.isActive} />
+                    <SidebarLabel>{term.termName}</SidebarLabel>
+                    <TrashIcon
+                      className="ml-auto size-5 hover:text-red-400!"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteTerm({ id: term._id });
                       }}
-                    >
-                      <DropdownLabel>{term.termName}</DropdownLabel>
-                      {term.isActive && <CheckIcon />}
-                      <TrashIcon
-                        className="col-start-6! row-start-1! hover:text-red-400!"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteTerm({ id: term._id });
-                        }}
-                      />
-                    </DropdownItem>
-                  ))}
-                  {isCreatingNewCalendar && (
+                    />
+                  </SidebarItem>
+                ))}
+                {isCreatingNewCalendar && (
+                  <SidebarItem>
                     <Input
                       placeholder="Enter new calendar name"
-                      className="col-span-full"
+                      className="w-full"
                       autoFocus
                       onBlur={() => setIsCreatingNewCalendar(false)}
                       onKeyDown={(e) => {
@@ -284,56 +246,118 @@ export function CalendarProvider({
                             setIsCreatingNewCalendar(false);
                           }
                         }
+                        if (e.key === 'Escape') {
+                          setIsCreatingNewCalendar(false);
+                        }
                       }}
                     />
-                  )}
-                </DropdownSection>
-                <DropdownDivider />
-                <DropdownSection>
-                  <DropdownItem
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsCreatingNewCalendar((prev) => !prev);
+                  </SidebarItem>
+                )}
+                <SidebarItem
+                  onClick={() => {
+                    setIsCreatingNewCalendar((prev) => !prev);
+                  }}
+                >
+                  <PlusIcon className="size-6" />
+                  <SidebarLabel>Add new calendar</SidebarLabel>
+                </SidebarItem>
+              </Authenticated>
+              <Unauthenticated>
+                {termsLocalStorage.map((term) => (
+                  <SidebarItem
+                    key={term._id}
+                    onClick={() => {
+                      setTermsLocalStorage(
+                        termsLocalStorage.map((t) => ({
+                          ...t,
+                          isActive: t._id === term._id,
+                        }))
+                      );
                     }}
                   >
-                    New calendar&hellip;
-                  </DropdownItem>
-                </DropdownSection>
-              </DropdownMenu>
-            </Dropdown>
-          </Authenticated>
-          <NavbarDivider />
-          <NavbarItem
-            current={!isFinalsSchedule}
-            onClick={() => setIsFinalsSchedule(false)}
-          >
-            Schedule
-          </NavbarItem>
-          <NavbarItem
-            current={isFinalsSchedule}
-            onClick={() => setIsFinalsSchedule(true)}
-          >
-            Finals
-          </NavbarItem>
-        </NavbarSection>
-        <NavbarSpacer />
-        <NavbarSection>
-          <Unauthenticated>
-            <SignInButton>
-              <NavbarItem>Login / Sign up</NavbarItem>
-            </SignInButton>
-          </Unauthenticated>
-          <Authenticated>
-            <NavbarItem onClick={() => setDialogOpen(true)}>Share</NavbarItem>
-            <ShareModal open={isDialogOpen} onClose={setDialogOpen} />
-            <UserButton />
-          </Authenticated>
-          <AuthLoading>
-            <div className="size-7 animate-pulse bg-gray-200 rounded-full" />
-          </AuthLoading>
-        </NavbarSection>
-      </Navbar>
-      {children}
+                    <Checkbox checked={term.isActive} />
+                    <SidebarLabel>{term.termName}</SidebarLabel>
+                  </SidebarItem>
+                ))}
+                <SignUpButton mode="modal">
+                  <SidebarItem>
+                    <PlusIcon className="size-6" />
+                    <SidebarLabel>Add new calendar</SidebarLabel>
+                  </SidebarItem>
+                </SignUpButton>
+              </Unauthenticated>
+              <AuthLoading>
+                <SidebarItem>
+                  <SidebarLabel>Loading...</SidebarLabel>
+                </SidebarItem>
+              </AuthLoading>
+            </SidebarSection>
+            <Authenticated>
+              {sharedTerms && sharedTerms.length > 0 && (
+                <SidebarSection>
+                  <SidebarHeading>Shared With Me</SidebarHeading>
+                  {sharedTerms.map(({ term, owner, show }) => (
+                    <SidebarItem
+                      key={term._id}
+                      onClick={() =>
+                        setShareVisibility({ termId: term._id, show: !show })
+                      }
+                    >
+                      <CheckboxGroup>
+                        <CheckboxField>
+                          <Checkbox checked={show} />
+                          <SidebarLabel>{term.termName}</SidebarLabel>
+                          <Description className="font-normal!">
+                            by {owner.name}
+                          </Description>
+                        </CheckboxField>
+                      </CheckboxGroup>
+                    </SidebarItem>
+                  ))}
+                </SidebarSection>
+              )}
+            </Authenticated>
+          </SidebarBody>
+        </Sidebar>
+
+        <div>
+          <Navbar className="px-2!">
+            <NavbarSection>
+              <NavbarItem
+                current={!isFinalsSchedule}
+                onClick={() => setIsFinalsSchedule(false)}
+              >
+                Schedule
+              </NavbarItem>
+              <NavbarItem
+                current={isFinalsSchedule}
+                onClick={() => setIsFinalsSchedule(true)}
+              >
+                Finals
+              </NavbarItem>
+            </NavbarSection>
+            <NavbarSpacer />
+            <NavbarSection>
+              <Unauthenticated>
+                <SignInButton>
+                  <NavbarItem>Login / Sign up</NavbarItem>
+                </SignInButton>
+              </Unauthenticated>
+              <Authenticated>
+                <NavbarItem onClick={() => setDialogOpen(true)}>
+                  Share
+                </NavbarItem>
+                <ShareModal open={isDialogOpen} onClose={setDialogOpen} />
+                <UserButton />
+              </Authenticated>
+              <AuthLoading>
+                <div className="size-7 animate-pulse bg-gray-200 rounded-full" />
+              </AuthLoading>
+            </NavbarSection>
+          </Navbar>
+          {children}
+        </div>
+      </div>
     </CalendarContext.Provider>
   );
 }
