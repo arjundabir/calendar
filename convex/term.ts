@@ -181,6 +181,7 @@ export const shareTerm = mutation({
 						termId: args.termId,
 						sharedWithUserId: userId,
 						ownerId: term.userId,
+						show: false,
 					}),
 				),
 		);
@@ -236,7 +237,7 @@ export const getTermsSharedWithMe = query({
 				const term = await ctx.db.get(share.termId);
 				const owner = await ctx.db.get(share.ownerId);
 				if (!term || !owner) return null;
-				return { term, owner };
+				return { term, owner, show: share.show };
 			}),
 		);
 
@@ -246,6 +247,7 @@ export const getTermsSharedWithMe = query({
 			): item is {
 				term: NonNullable<typeof item>['term'];
 				owner: NonNullable<typeof item>['owner'];
+				show: NonNullable<typeof item>['show'];
 			} => item !== null,
 		);
 	},
