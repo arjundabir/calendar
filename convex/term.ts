@@ -112,3 +112,66 @@ export const deleteTerm = mutation({
 		await ctx.db.delete(args.id);
 	},
 });
+
+export const getActiveTerm = query({
+	handler: async (ctx) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) return null;
+
+		const user = await ctx.db
+			.query('users')
+			.withIndex('by_clerkId', (q) => q.eq('clerkId', identity.tokenIdentifier))
+			.unique();
+		if (!user) return null;
+
+		const term = await ctx.db
+			.query('terms')
+			.withIndex('by_user', (q) => q.eq('userId', user._id))
+			.filter((q) => q.eq(q.field('isActive'), true))
+			.first();
+		if (!term) return null;
+		if (!term.sharedWith || term.sharedWith.length === 0)
+			return { ...term, sharedWith: [] };
+
+		const sharedUsers = await Promise.all(
+			term.sharedWith.map((userId) => ctx.db.get(userId)),
+		);
+		return { ...term, sharedWith: sharedUsers };
+	},
+});
+
+export const shareTerm = mutation({
+	args: {
+		termId: v.id('terms'),
+		emails: v.array(v.id('users')),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) return null;
+
+		const term = await ctx.db.get(args.termId);
+		if (!term) return null;
+
+		ctx.db.patch(args.termId, {
+			sharedWith: [...(term.sharedWith ?? []), ...args.emails],
+		});
+	},
+});
+
+export const unshareTerm = mutation({
+	args: {
+		termId: v.id('terms'),
+		userId: v.id('users'),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) return null;
+
+		const term = await ctx.db.get(args.termId);
+		if (!term) return null;
+
+		await ctx.db.patch(args.termId, {
+			sharedWith: term.sharedWith?.filter((userId) => userId !== args.userId),
+		});
+	},
+});
