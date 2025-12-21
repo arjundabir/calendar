@@ -109,6 +109,13 @@ export const deleteTerm = mutation({
 
 		await Promise.all(calendarEvents.map((event) => ctx.db.delete(event._id)));
 
+		const shares = await ctx.db
+			.query('shares')
+			.withIndex('by_term', (q) => q.eq('termId', args.id))
+			.collect();
+
+		await Promise.all(shares.map((share) => ctx.db.delete(share._id)));
+
 		await ctx.db.delete(args.id);
 	},
 });
@@ -130,13 +137,18 @@ export const getActiveTerm = query({
 			.filter((q) => q.eq(q.field('isActive'), true))
 			.first();
 		if (!term) return null;
-		if (!term.sharedWith || term.sharedWith.length === 0)
-			return { ...term, sharedWith: [] };
+
+		const shares = await ctx.db
+			.query('shares')
+			.withIndex('by_term', (q) => q.eq('termId', term._id))
+			.collect();
+
+		if (shares.length === 0) return { ...term, sharedWith: [] };
 
 		const sharedUsers = await Promise.all(
-			term.sharedWith.map((userId) => ctx.db.get(userId)),
+			shares.map((share) => ctx.db.get(share.sharedWithUserId)),
 		);
-		return { ...term, sharedWith: sharedUsers };
+		return { ...term, sharedWith: sharedUsers.filter(Boolean) };
 	},
 });
 
@@ -152,9 +164,26 @@ export const shareTerm = mutation({
 		const term = await ctx.db.get(args.termId);
 		if (!term) return null;
 
-		ctx.db.patch(args.termId, {
-			sharedWith: [...(term.sharedWith ?? []), ...args.emails],
-		});
+		const existingShares = await ctx.db
+			.query('shares')
+			.withIndex('by_term', (q) => q.eq('termId', args.termId))
+			.collect();
+
+		const existingUserIds = new Set(
+			existingShares.map((share) => share.sharedWithUserId),
+		);
+
+		await Promise.all(
+			args.emails
+				.filter((userId) => !existingUserIds.has(userId))
+				.map((userId) =>
+					ctx.db.insert('shares', {
+						termId: args.termId,
+						sharedWithUserId: userId,
+						ownerId: term.userId,
+					}),
+				),
+		);
 	},
 });
 
@@ -170,8 +199,54 @@ export const unshareTerm = mutation({
 		const term = await ctx.db.get(args.termId);
 		if (!term) return null;
 
-		await ctx.db.patch(args.termId, {
-			sharedWith: term.sharedWith?.filter((userId) => userId !== args.userId),
-		});
+		const share = await ctx.db
+			.query('shares')
+			.withIndex('by_term', (q) => q.eq('termId', args.termId))
+			.filter((q) => q.eq(q.field('sharedWithUserId'), args.userId))
+			.first();
+
+		if (share) {
+			await ctx.db.delete(share._id);
+		}
+	},
+});
+
+export const getTermsSharedWithMe = query({
+	handler: async (ctx) => {
+		const identity = await ctx.auth.getUserIdentity();
+		if (!identity) return [];
+
+		const user = await ctx.db
+			.query('users')
+			.withIndex('by_clerkId', (q) => q.eq('clerkId', identity.tokenIdentifier))
+			.unique();
+		if (!user) return [];
+
+		// Find all shares where current user is the recipient
+		const shares = await ctx.db
+			.query('shares')
+			.withIndex('by_sharedWithUser', (q) => q.eq('sharedWithUserId', user._id))
+			.collect();
+
+		if (shares.length === 0) return [];
+
+		// Get the terms and their owners
+		const termsWithOwners = await Promise.all(
+			shares.map(async (share) => {
+				const term = await ctx.db.get(share.termId);
+				const owner = await ctx.db.get(share.ownerId);
+				if (!term || !owner) return null;
+				return { term, owner };
+			}),
+		);
+
+		return termsWithOwners.filter(
+			(
+				item,
+			): item is {
+				term: NonNullable<typeof item>['term'];
+				owner: NonNullable<typeof item>['owner'];
+			} => item !== null,
+		);
 	},
 });
