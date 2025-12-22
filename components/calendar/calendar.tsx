@@ -12,7 +12,9 @@ import { useCalendarContext } from './calendar-provider';
 export default function Calendar() {
   const { calendarEvents, activeTerm, isFinalsSchedule } = useCalendarContext();
   const dbCalendarEvents = useQuery(api.calendar.getUserEvents);
-  const sharedCalendarEvents = useQuery(api.share.getSharedCalendarEvents);
+  const sharedCalendarEvents = useQuery(
+    api.shares.queries.getSharedCalendarEvents
+  );
 
   const dbCalendarEventsNoUserId =
     dbCalendarEvents?.map(({ userId: _, ...rest }) => rest) ?? [];

@@ -1,28 +1,4 @@
-import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
-
-export const setShareVisibility = mutation({
-	args: {
-		calendarId: v.id('calendars'),
-		show: v.boolean(),
-	},
-	handler: async (ctx, args) => {
-		const identity = await ctx.auth.getUserIdentity();
-		if (!identity) return null;
-
-		const calendar = await ctx.db.get(args.calendarId);
-		if (!calendar) return null;
-
-		const existingShare = await ctx.db
-			.query('shares')
-			.withIndex('by_calendar', (q) => q.eq('calendarId', args.calendarId))
-			.first();
-
-		if (existingShare) {
-			await ctx.db.patch(existingShare._id, { show: args.show });
-		}
-	},
-});
+import { query } from '../_generated/server';
 
 export const getSharedCalendarEvents = query({
 	handler: async (ctx) => {

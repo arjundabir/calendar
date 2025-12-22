@@ -106,7 +106,9 @@ export function CalendarProvider({
   const sharedCalendars = useQuery(
     api.calendars.queries.getCalendarsSharedWithMe
   );
-  const setShareVisibility = useMutation(api.share.setShareVisibility);
+  const setShareVisibility = useMutation(
+    api.shares.mutations.setShareVisibility
+  );
 
   const deleteCalendar = useMutation(
     api.calendars.mutations.deleteCalendar

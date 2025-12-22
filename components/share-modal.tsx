@@ -59,7 +59,7 @@ export default function ShareModal({
     }
   }
 
-  const shareCalendar = useMutation(api.calendars.mutations.shareCalendar);
+  const shareCalendar = useMutation(api.shares.mutations.shareCalendar);
   async function handleShare() {
     try {
       await shareCalendar({
@@ -74,7 +74,7 @@ export default function ShareModal({
     }
   }
 
-  const unshareCalendar = useMutation(api.calendars.mutations.unshareCalendar);
+  const unshareCalendar = useMutation(api.shares.mutations.unshareCalendar);
 
   return (
     <Dialog open={open} onClose={onClose}>
