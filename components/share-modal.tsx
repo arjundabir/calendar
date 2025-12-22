@@ -28,7 +28,7 @@ export default function ShareModal({
   const [emails, setEmails] = useState<(emailType | Doc<'users'>)[]>([]);
   const [error, setError] = useState<string | null>(null);
   const convex = useConvex();
-  const activeTerm = useQuery(api.term.getActiveTerm);
+  const activeCalendar = useQuery(api.calendars.queries.getActiveCalendar);
 
   async function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (error) {
@@ -59,54 +59,55 @@ export default function ShareModal({
     }
   }
 
-  const shareTerm = useMutation(api.term.shareTerm);
+  const shareCalendar = useMutation(api.calendars.mutations.shareCalendar);
   async function handleShare() {
     try {
-      await shareTerm({
-        termId: activeTerm!._id,
+      await shareCalendar({
+        calendarId: activeCalendar!._id,
         emails: emails.map((email) => (email as Doc<'users'>)._id),
       });
       setEmails([]);
       onClose(false);
     } catch (error) {
       console.error(error);
-      setError('Failed to share term');
+      setError('Failed to share calendar');
     }
   }
 
-  const unshareTerm = useMutation(api.term.unshareTerm);
+  const unshareCalendar = useMutation(api.calendars.mutations.unshareCalendar);
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Share "{activeTerm?.termName}" Calendar</DialogTitle>
+      <DialogTitle>Share "{activeCalendar?.calendarName}" Calendar</DialogTitle>
       <DialogDescription>Add people to see your calendar.</DialogDescription>
       <DialogBody>
         <FieldGroup>
-          {activeTerm?.sharedWith && activeTerm.sharedWith.length > 0 && (
-            <Field>
-              <Label>Shared With</Label>
-              <div className="flex flex-col gap-1 mb-2">
-                {activeTerm.sharedWith.map((user) => {
-                  if (!user) return null;
+          {activeCalendar?.sharedWith &&
+            activeCalendar.sharedWith.length > 0 && (
+              <Field>
+                <Label>Shared With</Label>
+                <div className="flex flex-col gap-1 mb-2">
+                  {activeCalendar.sharedWith.map((user) => {
+                    if (!user) return null;
 
-                  return (
-                    <EmailRow
-                      key={user._id}
-                      email={user.email}
-                      image={user.pictureUrl}
-                      name={user.name}
-                      handleDelete={() =>
-                        unshareTerm({
-                          termId: activeTerm!._id,
-                          userId: user._id,
-                        })
-                      }
-                    />
-                  );
-                })}
-              </div>
-            </Field>
-          )}
+                    return (
+                      <EmailRow
+                        key={user._id}
+                        email={user.email}
+                        image={user.pictureUrl}
+                        name={user.name}
+                        handleDelete={() =>
+                          unshareCalendar({
+                            calendarId: activeCalendar!._id,
+                            userId: user._id,
+                          })
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              </Field>
+            )}
           <Field>
             <Label>Add Emails</Label>
             <div className="flex flex-col gap-1 my-2">

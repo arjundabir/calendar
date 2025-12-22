@@ -42,19 +42,20 @@ type WebSocCourse =
 type WebSocDepartment = WebSocData['schools'][number]['departments'][number];
 type Calendar =
   paths['/v2/rest/calendar']['get']['responses'][200]['content']['application/json']['data'];
-type Term = Doc<'terms'>;
+type CalendarDoc = Doc<'calendars'>;
+type LocalCalendar = Omit<CalendarDoc, '_id' | '_creationTime'>;
 export interface CalendarEvents extends WebSocSection {
   deptCode: WebSocCourse['deptCode'];
   courseNumber: WebSocCourse['courseNumber'];
   deptName: WebSocDepartment['deptName'];
-  termId: string;
+  calendarId: string;
 }
 
 type CalendarContextType = {
   calendarEvents: CalendarEvents[] | [];
   setCalendarEvents: (events: CalendarEvents[] | []) => void;
   removeCalendarEvent: (sectionCode: string) => void;
-  activeTerm: Doc<'terms'> | undefined;
+  activeTerm: (Doc<'calendars'> | LocalCalendar) | undefined;
   isFinalsSchedule: boolean;
 };
 
@@ -79,15 +80,14 @@ export function CalendarProvider({
 }: {
   children: ReactNode;
   latestTerm: Calendar;
-  preloadedTerms: Preloaded<typeof api.term.getTerms>;
+  preloadedTerms: Preloaded<typeof api.calendars.queries.getCalendars>;
 }) {
   const [calendarEvents, setCalendarEvents] = useLocalStorage<
     CalendarContextType['calendarEvents']
   >('calendar', []);
-  const [termsLocalStorage, setTermsLocalStorage] = useLocalStorage<Term[]>(
-    'terms',
-    []
-  );
+  const [calendarsLocalStorage, setCalendarsLocalStorage] = useLocalStorage<
+    LocalCalendar[]
+  >('calendars', []);
   const [isFinalsSchedule, setIsFinalsSchedule] = useState<boolean>(false);
   const [isDialogOpen, setDialogOpen] = useState<boolean>(false);
 
@@ -97,98 +97,113 @@ export function CalendarProvider({
     );
   }
   const { isAuthenticated } = useStoreUserEffect();
-  const terms = usePreloadedQuery(preloadedTerms);
+  const calendars = usePreloadedQuery(preloadedTerms);
   const activeTerm = isAuthenticated
-    ? terms?.find((term) => term.isActive)
-    : termsLocalStorage.find((term) => term.isActive);
+    ? calendars?.find((calendar) => calendar.isActive)
+    : calendarsLocalStorage.find((calendar) => calendar.isActive);
   const [isCreatingNewCalendar, setIsCreatingNewCalendar] =
     useState<boolean>(false);
-  const sharedTerms = useQuery(api.term.getTermsSharedWithMe);
+  const sharedCalendars = useQuery(
+    api.calendars.queries.getCalendarsSharedWithMe
+  );
   const setShareVisibility = useMutation(api.share.setShareVisibility);
 
-  const deleteTerm = useMutation(api.term.deleteTerm).withOptimisticUpdate(
-    (localStore, args) => {
-      const terms = localStore.getQuery(api.term.getTerms);
-      if (!terms) return;
+  const deleteCalendar = useMutation(
+    api.calendars.mutations.deleteCalendar
+  ).withOptimisticUpdate((localStore, args) => {
+    const calendars = localStore.getQuery(api.calendars.queries.getCalendars);
+    if (!calendars) return;
 
-      const updatedTerms = terms.filter((term) => term._id !== args.id);
-      return updatedTerms;
-    }
-  );
+    const updatedCalendars = calendars.filter(
+      (calendar) => calendar._id !== args.id
+    );
+    return updatedCalendars;
+  });
 
-  const createTerm = useMutation(api.term.createTerm).withOptimisticUpdate(
-    (localStore, args) => {
-      const terms = localStore.getQuery(api.term.getTerms);
-      if (!terms) return;
+  const createCalendar = useMutation(
+    api.calendars.mutations.createCalendar
+  ).withOptimisticUpdate((localStore, args) => {
+    const calendars = localStore.getQuery(api.calendars.queries.getCalendars);
+    if (!calendars) return;
 
-      const updatedTerms = terms.map((term) => ({
-        ...term,
-        isActive: false,
-      }));
+    const updatedCalendars = calendars.map((calendar) => ({
+      ...calendar,
+      isActive: false,
+    }));
 
-      updatedTerms.push({
-        _id: `temp_${args.name}` as (typeof terms)[0]['_id'],
-        _creationTime: 0,
-        userId: { __tableName: 'users' } as (typeof terms)[0]['userId'],
-        termName: args.name,
-        isActive: true,
-      });
+    updatedCalendars.push({
+      _id: `temp_${args.name}` as (typeof calendars)[0]['_id'],
+      _creationTime: 0,
+      userId: { __tableName: 'users' } as (typeof calendars)[0]['userId'],
+      calendarName: args.name,
+      isActive: true,
+    });
 
-      localStore.setQuery(api.term.getTerms, {}, updatedTerms);
-    }
-  );
+    localStore.setQuery(
+      api.calendars.queries.getCalendars,
+      {},
+      updatedCalendars
+    );
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
-      const termName = `${latestTerm.quarter} ${latestTerm.year}`;
-      const termAlreadyExists = termsLocalStorage.some(
-        (t) => t.termName === termName
+      const calendarName = `${latestTerm.quarter} ${latestTerm.year}`;
+      const calendarAlreadyExists = calendarsLocalStorage.some(
+        (c) => c.calendarName === calendarName
       );
-      if (!termAlreadyExists) {
-        const newTerm: Term = {
-          _id: `local_${Date.now()}_${termName}` as Doc<'terms'>['_id'],
-          _creationTime: Date.now(),
+      if (!calendarAlreadyExists) {
+        const newCalendar: LocalCalendar = {
           userId: 'local' as Id<'users'>,
-          termName,
+          calendarName,
           isActive: true,
         };
-        setTermsLocalStorage([
-          ...termsLocalStorage.map((term) => ({ ...term, isActive: false })),
-          newTerm,
+        setCalendarsLocalStorage([
+          ...calendarsLocalStorage.map((calendar) => ({
+            ...calendar,
+            isActive: false,
+          })),
+          newCalendar,
         ]);
       }
       return;
     }
 
-    if (!terms) return;
+    if (!calendars) return;
 
-    const termName = `${latestTerm.quarter} ${latestTerm.year}`;
-    const termAlreadyExists = terms?.some((t) => t.termName === termName);
-    if (!termAlreadyExists) {
-      createTerm({ name: termName });
+    const calendarName = `${latestTerm.quarter} ${latestTerm.year}`;
+    const calendarAlreadyExists = calendars?.some(
+      (c) => c.calendarName === calendarName
+    );
+    if (!calendarAlreadyExists) {
+      createCalendar({ name: calendarName });
     }
   }, [
-    createTerm,
+    createCalendar,
     isAuthenticated,
     latestTerm.year,
     latestTerm.quarter,
-    terms,
-    termsLocalStorage,
-    setTermsLocalStorage,
+    calendars,
+    calendarsLocalStorage,
+    setCalendarsLocalStorage,
   ]);
 
-  const setActive = useMutation(api.term.setActiveTerm).withOptimisticUpdate(
-    (localStore, args) => {
-      const terms = localStore.getQuery(api.term.getTerms);
-      if (!terms) return;
+  const setActive = useMutation(
+    api.calendars.mutations.setActiveCalendar
+  ).withOptimisticUpdate((localStore, args) => {
+    const calendars = localStore.getQuery(api.calendars.queries.getCalendars);
+    if (!calendars) return;
 
-      const updatedTerms = terms.map((term) => ({
-        ...term,
-        isActive: term._id === args.id,
-      }));
-      localStore.setQuery(api.term.getTerms, {}, updatedTerms);
-    }
-  );
+    const updatedCalendars = calendars.map((calendar) => ({
+      ...calendar,
+      isActive: calendar._id === args.id,
+    }));
+    localStore.setQuery(
+      api.calendars.queries.getCalendars,
+      {},
+      updatedCalendars
+    );
+  });
 
   return (
     <CalendarContext.Provider
@@ -212,20 +227,20 @@ export function CalendarProvider({
             <SidebarSection>
               <SidebarHeading>My Calendars</SidebarHeading>
               <Authenticated>
-                {terms?.map((term) => (
+                {calendars?.map((calendar) => (
                   <SidebarItem
-                    key={term._id}
+                    key={calendar._id}
                     onClick={() => {
-                      setActive({ id: term._id });
+                      setActive({ id: calendar._id });
                     }}
                   >
-                    <Checkbox checked={term.isActive} />
-                    <SidebarLabel>{term.termName}</SidebarLabel>
+                    <Checkbox checked={calendar.isActive} />
+                    <SidebarLabel>{calendar.calendarName}</SidebarLabel>
                     <TrashIcon
                       className="ml-auto size-5 hover:text-red-400!"
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteTerm({ id: term._id });
+                        deleteCalendar({ id: calendar._id });
                       }}
                     />
                   </SidebarItem>
@@ -242,7 +257,7 @@ export function CalendarProvider({
                         if (e.key === 'Enter') {
                           const name = (e.target as HTMLInputElement).value;
                           if (name) {
-                            createTerm({ name });
+                            createCalendar({ name });
                             setIsCreatingNewCalendar(false);
                           }
                         }
@@ -263,20 +278,20 @@ export function CalendarProvider({
                 </SidebarItem>
               </Authenticated>
               <Unauthenticated>
-                {termsLocalStorage.map((term) => (
+                {calendarsLocalStorage.map((calendar) => (
                   <SidebarItem
-                    key={term._id}
+                    key={calendar.calendarName}
                     onClick={() => {
-                      setTermsLocalStorage(
-                        termsLocalStorage.map((t) => ({
-                          ...t,
-                          isActive: t._id === term._id,
+                      setCalendarsLocalStorage(
+                        calendarsLocalStorage.map((c) => ({
+                          ...c,
+                          isActive: c.calendarName === calendar.calendarName,
                         }))
                       );
                     }}
                   >
-                    <Checkbox checked={term.isActive} />
-                    <SidebarLabel>{term.termName}</SidebarLabel>
+                    <Checkbox checked={calendar.isActive} />
+                    <SidebarLabel>{calendar.calendarName}</SidebarLabel>
                   </SidebarItem>
                 ))}
                 <SignUpButton mode="modal">
@@ -293,20 +308,23 @@ export function CalendarProvider({
               </AuthLoading>
             </SidebarSection>
             <Authenticated>
-              {sharedTerms && sharedTerms.length > 0 && (
+              {sharedCalendars && sharedCalendars.length > 0 && (
                 <SidebarSection>
                   <SidebarHeading>Shared With Me</SidebarHeading>
-                  {sharedTerms.map(({ term, owner, show }) => (
+                  {sharedCalendars.map(({ calendar, owner, show }) => (
                     <SidebarItem
-                      key={term._id}
+                      key={calendar._id}
                       onClick={() =>
-                        setShareVisibility({ termId: term._id, show: !show })
+                        setShareVisibility({
+                          calendarId: calendar._id,
+                          show: !show,
+                        })
                       }
                     >
                       <CheckboxGroup>
                         <CheckboxField>
                           <Checkbox checked={show} />
-                          <SidebarLabel>{term.termName}</SidebarLabel>
+                          <SidebarLabel>{calendar.calendarName}</SidebarLabel>
                           <Description className="font-normal!">
                             by {owner.name}
                           </Description>

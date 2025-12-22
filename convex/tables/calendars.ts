@@ -1,10 +1,10 @@
 import { defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
-export const termsTable = defineTable({
+export const calendarsTable = defineTable({
 	userId: v.id('users'),
-	termName: v.string(),
+	calendarName: v.string(),
 	isActive: v.boolean(),
 })
 	.index('by_user', ['userId'])
-	.index('by_name', ['termName']);
+	.index('by_name', ['calendarName']);

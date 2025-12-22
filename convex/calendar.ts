@@ -88,7 +88,7 @@ export const calendarEventValidator = v.object({
 	deptName: v.string(),
 	courseNumber: v.string(),
 	userId: v.id('users'),
-	termId: v.id('terms'),
+	calendarId: v.id('calendars'),
 });
 
 export const createCalendarEvent = mutation({
@@ -126,20 +126,20 @@ export const getUserEvents = query({
 
 		if (!user) return [];
 
-		// Get the active term (there will always be only 1 active term)
-		const activeTerm = await ctx.db
-			.query('terms')
+		// Get the active calendar (there will always be only 1 active calendar)
+		const activeCalendar = await ctx.db
+			.query('calendars')
 			.withIndex('by_user', (q) => q.eq('userId', user._id))
 			.filter((q) => q.eq(q.field('isActive'), true))
 			.first();
 
-		if (!activeTerm) return [];
+		if (!activeCalendar) return [];
 
-		// Filter events to only include those from the active term
+		// Filter events to only include those from the active calendar
 		const events = await ctx.db
 			.query('calendarEvents')
 			.filter((q) => q.eq(q.field('userId'), user._id))
-			.filter((q) => q.eq(q.field('termId'), activeTerm._id))
+			.filter((q) => q.eq(q.field('calendarId'), activeCalendar._id))
 			.collect();
 
 		return events;
@@ -173,18 +173,18 @@ export const deleteCalendarEvent = mutation({
 	},
 });
 
-export const getCalendarEventsByTermIds = query({
+export const getCalendarEventsByCalendarIds = query({
 	args: {
-		termIds: v.array(v.id('terms')),
+		calendarIds: v.array(v.id('calendars')),
 	},
 	handler: async (ctx, args) => {
-		if (args.termIds.length === 0) return [];
+		if (args.calendarIds.length === 0) return [];
 
 		const allEvents = await Promise.all(
-			args.termIds.map((termId) =>
+			args.calendarIds.map((calendarId) =>
 				ctx.db
 					.query('calendarEvents')
-					.filter((q) => q.eq(q.field('termId'), termId))
+					.filter((q) => q.eq(q.field('calendarId'), calendarId))
 					.collect(),
 			),
 		);

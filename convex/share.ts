@@ -3,19 +3,19 @@ import { mutation, query } from './_generated/server';
 
 export const setShareVisibility = mutation({
 	args: {
-		termId: v.id('terms'),
+		calendarId: v.id('calendars'),
 		show: v.boolean(),
 	},
 	handler: async (ctx, args) => {
 		const identity = await ctx.auth.getUserIdentity();
 		if (!identity) return null;
 
-		const term = await ctx.db.get(args.termId);
-		if (!term) return null;
+		const calendar = await ctx.db.get(args.calendarId);
+		if (!calendar) return null;
 
 		const existingShare = await ctx.db
 			.query('shares')
-			.withIndex('by_term', (q) => q.eq('termId', args.termId))
+			.withIndex('by_calendar', (q) => q.eq('calendarId', args.calendarId))
 			.first();
 
 		if (existingShare) {
@@ -35,20 +35,20 @@ export const getSharedCalendarEvents = query({
 			.unique();
 		if (!user) return [];
 
-		const sharedTerms = await ctx.db
+		const sharedCalendars = await ctx.db
 			.query('shares')
 			.withIndex('by_sharedWithUser', (q) => q.eq('sharedWithUserId', user._id))
 			.filter((q) => q.eq(q.field('show'), true))
 			.collect();
-		if (sharedTerms.length === 0) return [];
+		if (sharedCalendars.length === 0) return [];
 
-		const termIds = sharedTerms.map((share) => share.termId);
+		const calendarIds = sharedCalendars.map((share) => share.calendarId);
 
 		const allEvents = await Promise.all(
-			termIds.map((termId) =>
+			calendarIds.map((calendarId) =>
 				ctx.db
 					.query('calendarEvents')
-					.filter((q) => q.eq(q.field('termId'), termId))
+					.filter((q) => q.eq(q.field('calendarId'), calendarId))
 					.collect(),
 			),
 		);

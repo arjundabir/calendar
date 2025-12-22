@@ -1,5 +1,19 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
+import { calendarEventValidator } from './calendar';
+import type { Id } from './_generated/dataModel';
+
+const localTermValidator = v.object({
+	userId: v.id('users'),
+	termName: v.string(),
+	isActive: v.boolean(),
+});
+
+const localCalendarEventValidator = calendarEventValidator
+	.extend({
+		termName: v.string(),
+	})
+	.omit('userId');
 
 export const store = mutation({
 	args: {},

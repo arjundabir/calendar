@@ -10,12 +10,14 @@
 
 import type * as auth from "../auth.js";
 import type * as calendar from "../calendar.js";
+import type * as calendars_mutations from "../calendars/mutations.js";
+import type * as calendars_queries from "../calendars/queries.js";
 import type * as http from "../http.js";
 import type * as share from "../share.js";
+import type * as tables_calendars from "../tables/calendars.js";
+import type * as tables_events from "../tables/events.js";
 import type * as tables_shares from "../tables/shares.js";
-import type * as tables_term from "../tables/term.js";
 import type * as tables_user from "../tables/user.js";
-import type * as term from "../term.js";
 import type * as users from "../users.js";
 
 import type {
@@ -27,12 +29,14 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   calendar: typeof calendar;
+  "calendars/mutations": typeof calendars_mutations;
+  "calendars/queries": typeof calendars_queries;
   http: typeof http;
   share: typeof share;
+  "tables/calendars": typeof tables_calendars;
+  "tables/events": typeof tables_events;
   "tables/shares": typeof tables_shares;
-  "tables/term": typeof tables_term;
   "tables/user": typeof tables_user;
-  term: typeof term;
   users: typeof users;
 }>;
 

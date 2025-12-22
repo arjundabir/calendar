@@ -13,7 +13,7 @@ export default async function Home() {
   const [websocTerms, allCalendars, preloadedTerms] = await Promise.all([
     getWebSocTerms(),
     listAllCalendars(),
-    preloadQuery(api.term.getTerms),
+    preloadQuery(api.calendars.queries.getCalendars),
   ]);
 
   return (

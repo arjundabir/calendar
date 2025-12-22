@@ -236,6 +236,7 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                       </AccordionButton>
                       <AccordionPanel>
                         <Text
+                          // biome-ignore lint/security/noDangerouslySetInnerHtml: we trust the data
                           dangerouslySetInnerHTML={{
                             __html: school.schoolComment,
                           }}
@@ -261,17 +262,17 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                               )}
                             </AccordionButton>
                             <AccordionPanel>
-                              {department.sectionCodeRangeComments &&
-                                department.sectionCodeRangeComments.map(
-                                  (sectionCodeRangeComment, index) => (
-                                    <Text
-                                      key={index}
-                                      dangerouslySetInnerHTML={{
-                                        __html: sectionCodeRangeComment,
-                                      }}
-                                    />
-                                  )
-                                )}
+                              {department.sectionCodeRangeComments?.map(
+                                (sectionCodeRangeComment) => (
+                                  <Text
+                                    key={sectionCodeRangeComment}
+                                    // biome-ignore lint/security/noDangerouslySetInnerHtml: we trust the data
+                                    dangerouslySetInnerHTML={{
+                                      __html: sectionCodeRangeComment,
+                                    }}
+                                  />
+                                )
+                              )}
                             </AccordionPanel>
                           </Accordion>
                         ) : (
@@ -299,6 +300,7 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                   {course.courseTitle}
                                 </Subheading>
                                 <Text
+                                  // biome-ignore lint/security/noDangerouslySetInnerHtml: we trust the data
                                   dangerouslySetInnerHTML={{
                                     __html: course.courseComment,
                                   }}
@@ -332,6 +334,7 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                         <TableCell colSpan={11}>
                                           <Text
                                             caption
+                                            // biome-ignore lint/security/noDangerouslySetInnerHtml: we trust the data
                                             dangerouslySetInnerHTML={{
                                               __html: section.sectionComment,
                                             }}
@@ -351,16 +354,10 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                               type="button"
                                               plain
                                               onClick={() => {
-                                                if (isSignedIn) {
-                                                  deleteCalendarEvent({
-                                                    sectionCode:
-                                                      section.sectionCode,
-                                                  });
-                                                } else {
-                                                  removeCalendarEvent(
-                                                    section.sectionCode
-                                                  );
-                                                }
+                                                deleteCalendarEvent({
+                                                  sectionCode:
+                                                    section.sectionCode,
+                                                });
                                               }}
                                             >
                                               <MinusIcon className="size-4" />
@@ -376,13 +373,11 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                                   courseNumber:
                                                     course.courseNumber,
                                                   deptName: department.deptName,
-                                                  termId: activeTerm!._id,
+                                                  calendarId: activeTerm!._id,
                                                 };
-                                                if (isSignedIn) {
-                                                  addToCalendarDb({
-                                                    event: calendarEvent,
-                                                  });
-                                                }
+                                                addToCalendarDb({
+                                                  event: calendarEvent,
+                                                });
                                               }}
                                             >
                                               <PlusIcon className="size-4" />
@@ -397,17 +392,9 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                               type="button"
                                               plain
                                               onClick={() => {
-                                                // TODO: fix auth and unauth state later
-                                                if (isSignedIn) {
-                                                  deleteCalendarEvent({
-                                                    sectionCode:
-                                                      section.sectionCode,
-                                                  });
-                                                } else {
-                                                  removeCalendarEvent(
-                                                    section.sectionCode
-                                                  );
-                                                }
+                                                removeCalendarEvent(
+                                                  section.sectionCode
+                                                );
                                               }}
                                             >
                                               <MinusIcon className="size-4" />
@@ -423,18 +410,12 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                                   courseNumber:
                                                     course.courseNumber,
                                                   deptName: department.deptName,
-                                                  termId: activeTerm!._id,
+                                                  calendarId: activeTerm!._id,
                                                 };
-                                                if (isSignedIn) {
-                                                  addToCalendarDb({
-                                                    event: calendarEvent,
-                                                  });
-                                                } else {
-                                                  setCalendarEvents([
-                                                    ...calendarEvents,
-                                                    calendarEvent,
-                                                  ]);
-                                                }
+                                                setCalendarEvents([
+                                                  ...calendarEvents,
+                                                  calendarEvent,
+                                                ]);
                                               }}
                                             >
                                               <PlusIcon className="size-4" />
@@ -480,10 +461,13 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                       </TableCell>
                                       <TableCell>
                                         {section.meetings.map(
-                                          (meeting, idx) => {
+                                          (meeting, meetingIndex) => {
                                             if (meeting.timeIsTBA) {
                                               return (
-                                                <Text key={idx} caption>
+                                                <Text
+                                                  key={`${meetingIndex}-${meeting.timeIsTBA}`}
+                                                  caption
+                                                >
                                                   TBA
                                                 </Text>
                                               );
@@ -504,7 +488,10 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                               0
                                             );
                                             return (
-                                              <Strong key={idx} caption>
+                                              <Strong
+                                                key={`${meetingIndex}-${meeting.timeIsTBA}`}
+                                                caption
+                                              >
                                                 {format(startDate, 'h:mm a')}-
                                                 {format(endDate, 'h:mm a')}
                                               </Strong>
