@@ -86,8 +86,8 @@ export const deleteCalendar = mutation({
 
 		// Delete all calendar events associated with this calendar
 		const calendarEvents = await ctx.db
-			.query('calendarEvents')
-			.filter((q) => q.eq(q.field('calendarId'), args.id))
+			.query('events')
+			.withIndex('by_calendar', (q) => q.eq('calendarId', args.id))
 			.collect();
 
 		await Promise.all(calendarEvents.map((event) => ctx.db.delete(event._id)));

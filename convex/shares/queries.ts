@@ -23,8 +23,8 @@ export const getSharedCalendarEvents = query({
 		const allEvents = await Promise.all(
 			calendarIds.map((calendarId) =>
 				ctx.db
-					.query('calendarEvents')
-					.filter((q) => q.eq(q.field('calendarId'), calendarId))
+					.query('events')
+					.withIndex('by_calendar', (q) => q.eq('calendarId', calendarId))
 					.collect(),
 			),
 		);

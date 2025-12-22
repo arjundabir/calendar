@@ -114,11 +114,11 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
     );
   }
 
-  const getCalendarEvents = useQuery(api.calendar.getUserEvents);
+  const getCalendarEvents = useQuery(api.events.queries.getUserEvents);
   const addToCalendarDb = useMutation(
-    api.calendar.createCalendarEvent
+    api.events.mutations.createCalendarEvent
   ).withOptimisticUpdate((localStore, args) => {
-    const currentEvents = localStore.getQuery(api.calendar.getUserEvents);
+    const currentEvents = localStore.getQuery(api.events.queries.getUserEvents);
     if (!currentEvents) return;
 
     const userId =
@@ -126,25 +126,26 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
       ({ __tableName: 'users' } as (typeof currentEvents)[0]['userId']);
 
     const tempEvent = {
-      ...args.event,
       userId,
+      calendarId: args.event.calendarId,
+      event: args.event,
       _id: `temp_${args.event.sectionCode}` as (typeof currentEvents)[0]['_id'],
       _creationTime: Date.now(),
     };
 
     const updatedEvents = [...currentEvents, tempEvent];
-    localStore.setQuery(api.calendar.getUserEvents, {}, updatedEvents);
+    localStore.setQuery(api.events.queries.getUserEvents, {}, updatedEvents);
   });
   const deleteCalendarEvent = useMutation(
-    api.calendar.deleteCalendarEvent
+    api.events.mutations.deleteCalendarEvent
   ).withOptimisticUpdate((localStore, args) => {
-    const currentEvents = localStore.getQuery(api.calendar.getUserEvents);
+    const currentEvents = localStore.getQuery(api.events.queries.getUserEvents);
     if (!currentEvents) return;
 
     const updatedEvents = currentEvents.filter(
-      (event) => event.sectionCode !== args.sectionCode
+      (event) => event.event.sectionCode !== args.sectionCode
     );
-    localStore.setQuery(api.calendar.getUserEvents, {}, updatedEvents);
+    localStore.setQuery(api.events.queries.getUserEvents, {}, updatedEvents);
   });
 
   return (
@@ -347,7 +348,8 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                         <TableCell className="px-0!">
                                           {getCalendarEvents?.some(
                                             (calendarEvent) =>
-                                              calendarEvent.sectionCode ===
+                                              calendarEvent.event
+                                                .sectionCode ===
                                               section.sectionCode
                                           ) ? (
                                             <Button
