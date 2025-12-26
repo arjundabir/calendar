@@ -1,13 +1,13 @@
+import { preloadQuery } from 'convex/nextjs';
+import { AddedCourses } from '@/components/calendar/added-courses';
 import Calendar from '@/components/calendar/calendar';
+import { CalendarProvider } from '@/components/calendar/calendar-provider';
 import CalendarTabs from '@/components/calendar/calendar-tabs';
 import SearchForm from '@/components/calendar/search-form';
 import { TabProvider } from '@/components/calendar/tab-context';
-import { CalendarProvider } from '@/components/calendar/calendar-provider';
-import { getWebSocTerms, listAllCalendars } from './actions';
-import { AddedCourses } from '@/components/calendar/added-courses';
-import { getLatestSocAvailable } from '@/lib/calendar/terms-helper';
-import { preloadQuery } from 'convex/nextjs';
 import { api } from '@/convex/_generated/api';
+import { getLatestSocAvailable } from '@/lib/calendar/terms-helper';
+import { getWebSocTerms, listAllCalendars } from './actions';
 
 export default async function Home() {
   const [websocTerms, allCalendars, preloadedTerms] = await Promise.all([

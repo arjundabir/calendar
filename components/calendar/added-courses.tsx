@@ -1,6 +1,13 @@
 'use client';
 
+import { useUser } from '@clerk/nextjs';
+import { MinusIcon } from '@heroicons/react/24/solid';
+import { useMutation, useQuery } from 'convex/react';
+import { format } from 'date-fns';
 import { Fragment, useMemo } from 'react';
+import { api } from '@/convex/_generated/api';
+import { Button } from '../button';
+import { Heading, Subheading } from '../heading';
 import {
   Table,
   TableBody,
@@ -9,17 +16,9 @@ import {
   TableHeader,
   TableRow,
 } from '../table';
-import { MinusIcon } from '@heroicons/react/24/solid';
-import { Heading, Subheading } from '../heading';
 import { Strong, Text, TextLink } from '../text';
-import { format } from 'date-fns';
-import { useCalendarContext } from './calendar-provider';
-import { useMutation, useQuery } from 'convex/react';
-import { api } from '@/convex/_generated/api';
-import { useUser } from '@clerk/nextjs';
+import { CalendarEvents, useCalendarContext } from './calendar-provider';
 import { useTabContext } from './tab-context';
-import { Button } from '../button';
-import { CalendarEvents } from './calendar-provider';
 
 // Group calendar events by department and course
 function groupEventsByCourse(events: CalendarEvents[]) {

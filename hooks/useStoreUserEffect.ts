@@ -1,10 +1,9 @@
 'use client';
 
-import { useConvexAuth } from 'convex/react';
+import { useConvexAuth, useMutation } from 'convex/react';
 import { useEffect, useState } from 'react';
-import { useMutation } from 'convex/react';
-import type { Id } from '../convex/_generated/dataModel';
 import { api } from '@/convex/_generated/api';
+import type { Id } from '../convex/_generated/dataModel';
 
 export function useStoreUserEffect() {
 	const { isLoading, isAuthenticated } = useConvexAuth();

@@ -1,6 +1,6 @@
-import type { CalendarEvents } from '@/components/calendar/calendar-provider';
 import type { ReactElement } from 'react';
 import { CalendarEvent } from '@/components/calendar/calendar-event';
+import type { CalendarEvents } from '@/components/calendar/calendar-provider';
 
 // Helper function to map day strings to CalendarEvent dayOfWeek format
 function parseDays(days: string): Array<'M' | 'T' | 'W' | 'Th' | 'F'> {

@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import ConvexClientProvider from '@/components/convex/ConvexClientProvider';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from 'sonner';
+import ConvexClientProvider from '@/components/convex/ConvexClientProvider';
 
 const inter = Inter({
   variable: '--font-inter',

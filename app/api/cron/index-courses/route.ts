@@ -1,8 +1,8 @@
-import createClient from 'openapi-fetch';
-import type { paths } from '@/types/anteater-api-types';
-import { NextResponse } from 'next/server';
 import { writeFile } from 'fs/promises';
+import { NextResponse } from 'next/server';
+import createClient from 'openapi-fetch';
 import path from 'path';
+import type { paths } from '@/types/anteater-api-types';
 
 export interface CourseIndex {
 	department: string;

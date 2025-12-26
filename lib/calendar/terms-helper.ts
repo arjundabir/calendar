@@ -1,4 +1,4 @@
-import { format, parseISO, isAfter } from 'date-fns';
+import { format, isAfter, parseISO } from 'date-fns';
 import { paths } from '@/types/anteater-api-types';
 
 type Calendars =

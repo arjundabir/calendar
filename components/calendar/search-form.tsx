@@ -1,12 +1,33 @@
 'use client';
 
-import { Button } from '../button';
-import type { paths } from '@/types/anteater-api-types';
-import { Select } from '@/components/select';
-import z from 'zod';
-import { useForm, Controller } from 'react-hook-form';
-import { queryWebSoc } from '@/app/actions';
+import { useUser } from '@clerk/nextjs';
+import { MinusIcon, PlusIcon } from '@heroicons/react/24/solid';
+import {
+  Authenticated,
+  Unauthenticated,
+  useMutation,
+  useQuery,
+} from 'convex/react';
+import { format, formatDistanceToNow } from 'date-fns';
 import { Fragment, useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import z from 'zod';
+import { queryWebSoc } from '@/app/actions';
+import { CourseIndex } from '@/app/api/cron/index-courses/route';
+import { Select } from '@/components/select';
+import { api } from '@/convex/_generated/api';
+import { Doc } from '@/convex/_generated/dataModel';
+import type { paths } from '@/types/anteater-api-types';
+import {
+  Accordion,
+  AccordionButton,
+  AccordionGroup,
+  AccordionPanel,
+} from '../accordion';
+import { Button } from '../button';
+import { Combobox, ComboboxLabel, ComboboxOption } from '../combobox';
+import { Heading, Subheading } from '../heading';
 import {
   Table,
   TableBody,
@@ -15,30 +36,9 @@ import {
   TableHeader,
   TableRow,
 } from '../table';
-import { MinusIcon, PlusIcon } from '@heroicons/react/24/solid';
-import { Heading, Subheading } from '../heading';
 import { Strong, Text, TextLink } from '../text';
-import { formatDistanceToNow, format } from 'date-fns';
-import {
-  Accordion,
-  AccordionButton,
-  AccordionGroup,
-  AccordionPanel,
-} from '../accordion';
 import { useCalendarContext } from './calendar-provider';
-import {
-  Authenticated,
-  Unauthenticated,
-  useMutation,
-  useQuery,
-} from 'convex/react';
-import { api } from '@/convex/_generated/api';
-import { useUser } from '@clerk/nextjs';
 import { useTabContext } from './tab-context';
-import { Combobox, ComboboxLabel, ComboboxOption } from '../combobox';
-import { CourseIndex } from '@/app/api/cron/index-courses/route';
-import { Doc } from '@/convex/_generated/dataModel';
-import { toast } from 'sonner';
 
 type Term =
   paths['/v2/rest/websoc/terms']['get']['responses'][200]['content']['application/json']['data'][number];

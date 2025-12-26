@@ -1,9 +1,9 @@
-import { defineSchema } from 'convex/server';
 import { authTables } from '@convex-dev/auth/server';
-import { usersTable } from './tables/user';
-import { sharesTable } from './tables/shares';
-import { eventsTable } from './tables/events';
+import { defineSchema } from 'convex/server';
 import { calendarsTable } from './tables/calendars';
+import { eventsTable } from './tables/events';
+import { sharesTable } from './tables/shares';
+import { usersTable } from './tables/user';
 
 const schema = defineSchema({
 	...authTables,
