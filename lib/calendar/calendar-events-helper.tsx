@@ -110,6 +110,84 @@ function getColorForDept(
   return colors[Math.abs(hash) % colors.length];
 }
 
+// Helper function to get a color for shared calendars based on ownerId
+// Uses a distinct palette to visually separate from user's own courses
+function getColorForSharedCalendar(
+  ownerId: string
+):
+  | 'red'
+  | 'orange'
+  | 'amber'
+  | 'yellow'
+  | 'lime'
+  | 'green'
+  | 'emerald'
+  | 'teal'
+  | 'cyan'
+  | 'sky'
+  | 'blue'
+  | 'indigo'
+  | 'violet'
+  | 'purple'
+  | 'fuchsia'
+  | 'pink'
+  | 'rose'
+  | 'slate'
+  | 'gray'
+  | 'zinc'
+  | 'neutral'
+  | 'stone' {
+  // Use muted/neutral colors to distinguish shared calendars
+  const sharedColors: Array<
+    | 'slate'
+    | 'gray'
+    | 'zinc'
+    | 'neutral'
+    | 'stone'
+    | 'red'
+    | 'orange'
+    | 'amber'
+    | 'yellow'
+    | 'lime'
+    | 'green'
+    | 'emerald'
+    | 'teal'
+    | 'cyan'
+    | 'sky'
+    | 'blue'
+    | 'indigo'
+    | 'violet'
+    | 'purple'
+    | 'fuchsia'
+    | 'pink'
+    | 'rose'
+  > = [
+    'slate',
+    'zinc',
+    'neutral',
+    'stone',
+    'gray',
+    'rose',
+    'amber',
+    'orange',
+    'yellow',
+    'lime',
+    'emerald',
+    'teal',
+    'cyan',
+    'sky',
+    'indigo',
+    'violet',
+  ];
+
+  // Simple hash function to consistently assign colors
+  let hash = 0;
+  for (let i = 0; i < ownerId.length; i++) {
+    hash = ownerId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return sharedColors[Math.abs(hash) % sharedColors.length];
+}
+
 // Helper function to convert time to minutes since 7AM (start of calendar)
 function timeToMinutes(hour: number, minute: number): number {
   return (hour - 7) * 60 + minute;
@@ -145,7 +223,8 @@ function parseFinalDayOfWeek(day: string): 'M' | 'T' | 'W' | 'Th' | 'F' | null {
 // Transform calendarEvents into CalendarEvent components
 function transformCalendarEvents(
   calendarEvents: CalendarEvents[],
-  overrideColor?: ReturnType<typeof getColorForDept>
+  overrideColor?: ReturnType<typeof getColorForDept>,
+  ownerMap?: Map<string, string>
 ) {
   // First pass: collect all event data
   type EventData = {
@@ -166,7 +245,15 @@ function transformCalendarEvents(
   const eventDataList: EventData[] = [];
 
   calendarEvents.forEach((calendarEvent, eventIndex) => {
-    const color = getColorForDept(calendarEvent.sectionCode);
+    // Check if this event belongs to a shared calendar
+    const calendarId = (calendarEvent as CalendarEvents & { calendarId?: string })
+      .calendarId;
+    const ownerId = calendarId && ownerMap?.get(calendarId);
+    const color =
+      overrideColor ??
+      (ownerId
+        ? getColorForSharedCalendar(ownerId)
+        : getColorForDept(calendarEvent.sectionCode));
 
     calendarEvent.meetings.forEach((meeting, meetingIndex) => {
       // Skip TBA meetings
@@ -280,7 +367,8 @@ function transformCalendarEvents(
 // Transform calendarEvents into CalendarEvent components for finals schedule
 function transformFinalsEvents(
   calendarEvents: CalendarEvents[],
-  overrideColor?: ReturnType<typeof getColorForDept>
+  overrideColor?: ReturnType<typeof getColorForDept>,
+  ownerMap?: Map<string, string>
 ) {
   // First pass: collect all final exam event data
   type EventData = {
@@ -306,7 +394,15 @@ function transformFinalsEvents(
       return;
     }
 
-    const color = getColorForDept(calendarEvent.sectionCode);
+    // Check if this event belongs to a shared calendar
+    const calendarId = (calendarEvent as CalendarEvents & { calendarId?: string })
+      .calendarId;
+    const ownerId = calendarId && ownerMap?.get(calendarId);
+    const color =
+      overrideColor ??
+      (ownerId
+        ? getColorForSharedCalendar(ownerId)
+        : getColorForDept(calendarEvent.sectionCode));
     const finalExam = calendarEvent.finalExam;
 
     // Parse dayOfWeek string to CalendarEvent format
@@ -415,6 +511,7 @@ function transformFinalsEvents(
 export {
   parseDays,
   getColorForDept,
+  getColorForSharedCalendar,
   transformCalendarEvents,
   transformFinalsEvents,
 };

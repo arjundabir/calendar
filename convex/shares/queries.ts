@@ -18,6 +18,11 @@ export const getSharedCalendarEvents = query({
 			.collect();
 		if (sharedCalendars.length === 0) return [];
 
+		// Build a map from calendarId to ownerId
+		const calendarToOwnerMap = new Map(
+			sharedCalendars.map((share) => [share.calendarId, share.ownerId]),
+		);
+
 		const calendarIds = sharedCalendars.map((share) => share.calendarId);
 
 		const allEvents = await Promise.all(
@@ -29,6 +34,10 @@ export const getSharedCalendarEvents = query({
 			),
 		);
 
-		return allEvents.flat();
+		// Add ownerId to each event
+		return allEvents.flat().map((event) => ({
+			...event,
+			ownerId: calendarToOwnerMap.get(event.calendarId),
+		}));
 	},
 });

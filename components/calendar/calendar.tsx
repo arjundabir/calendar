@@ -24,25 +24,34 @@ export default function Calendar() {
       ...rest,
     })) ?? [];
 
-  const transformedEvents = transformCalendarEvents(
-    calendarEvents.filter((event) => event.termId === activeTerm?._id)
-  );
-  const transformedDbEvents = transformCalendarEvents([
-    ...dbCalendarEventsNoUserId,
-    ...(sharedCalendarEvents?.map(
-      ({ userId: _, calendarId, event, ...rest }) => ({
-        ...event,
-        calendarId: calendarId as string,
-        ...rest,
-      })
-    ) ?? []),
-  ]);
+  // Build owner map from shared calendar events (maps calendarId to ownerId)
+  const ownerMap = new Map<string, string>();
+  const sharedEventsFlattened =
+    sharedCalendarEvents?.map(
+      ({ userId: _, calendarId, event, ownerId, ...rest }) => {
+        if (ownerId) {
+          ownerMap.set(calendarId as string, ownerId as string);
+        }
+        return {
+          ...event,
+          calendarId: calendarId as string,
+          ...rest,
+        };
+      }
+    ) ?? [];
 
-  const transformedFinalsEvents = transformFinalsEvents(
-    calendarEvents.filter((event) => event.termId === activeTerm?._id)
+  const transformedEvents = transformCalendarEvents(calendarEvents);
+  const transformedDbEvents = transformCalendarEvents(
+    [...dbCalendarEventsNoUserId, ...sharedEventsFlattened],
+    undefined,
+    ownerMap
   );
+
+  const transformedFinalsEvents = transformFinalsEvents(calendarEvents);
   const transformedDbFinalsEvents = transformFinalsEvents(
-    dbCalendarEventsNoUserId
+    [...dbCalendarEventsNoUserId, ...sharedEventsFlattened],
+    undefined,
+    ownerMap
   );
 
   return (
