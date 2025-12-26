@@ -38,6 +38,7 @@ import { useTabContext } from './tab-context';
 import { Combobox, ComboboxLabel, ComboboxOption } from '../combobox';
 import { CourseIndex } from '@/app/api/cron/index-courses/route';
 import { Doc } from '@/convex/_generated/dataModel';
+import { toast } from 'sonner';
 
 type Term =
   paths['/v2/rest/websoc/terms']['get']['responses'][200]['content']['application/json']['data'][number];
@@ -435,11 +436,14 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                       <TableCell>
                                         <Button plain>
                                           <Text
-                                            onClick={() =>
+                                            onClick={() => {
                                               navigator.clipboard.writeText(
                                                 section.sectionCode
-                                              )
-                                            }
+                                              );
+                                              toast.success(
+                                                'Copied to clipboard'
+                                              );
+                                            }}
                                           >
                                             {section.sectionCode}
                                           </Text>
@@ -459,13 +463,15 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                         </Text>
                                       </TableCell>
                                       <TableCell>
-                                        {section.instructors.map(
-                                          (instructor) => (
-                                            <Strong key={instructor} caption>
-                                              {instructor}
-                                            </Strong>
-                                          )
-                                        )}
+                                        <div className="flex flex-wrap gap-x-2">
+                                          {section.instructors.map(
+                                            (instructor) => (
+                                              <Strong key={instructor} caption>
+                                                {instructor}
+                                              </Strong>
+                                            )
+                                          )}
+                                        </div>
                                       </TableCell>
                                       <TableCell>
                                         {section.meetings.map(
