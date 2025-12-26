@@ -246,8 +246,9 @@ function transformCalendarEvents(
 
   calendarEvents.forEach((calendarEvent, eventIndex) => {
     // Check if this event belongs to a shared calendar
-    const calendarId = (calendarEvent as CalendarEvents & { calendarId?: string })
-      .calendarId;
+    const calendarId = (
+      calendarEvent as CalendarEvents & { calendarId?: string }
+    ).calendarId;
     const ownerId = calendarId && ownerMap?.get(calendarId);
     const color =
       overrideColor ??
@@ -395,8 +396,9 @@ function transformFinalsEvents(
     }
 
     // Check if this event belongs to a shared calendar
-    const calendarId = (calendarEvent as CalendarEvents & { calendarId?: string })
-      .calendarId;
+    const calendarId = (
+      calendarEvent as CalendarEvents & { calendarId?: string }
+    ).calendarId;
     const ownerId = calendarId && ownerMap?.get(calendarId);
     const color =
       overrideColor ??

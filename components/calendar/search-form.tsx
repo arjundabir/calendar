@@ -406,13 +406,16 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                               type="button"
                                               plain
                                               onClick={() => {
+                                                const calendarName =
+                                                  activeTerm?.calendarName ||
+                                                  '';
                                                 const calendarEvent = {
                                                   ...section,
                                                   deptCode: course.deptCode,
                                                   courseNumber:
                                                     course.courseNumber,
                                                   deptName: department.deptName,
-                                                  calendarId: activeTerm!._id,
+                                                  calendarId: calendarName,
                                                 };
                                                 setCalendarEvents([
                                                   ...calendarEvents,
