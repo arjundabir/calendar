@@ -459,13 +459,15 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                         </Text>
                                       </TableCell>
                                       <TableCell>
-                                        {section.instructors.map(
-                                          (instructor) => (
-                                            <Strong key={instructor} caption>
-                                              {instructor}
-                                            </Strong>
-                                          )
-                                        )}
+                                        <div className="flex flex-wrap gap-x-2">
+                                          {section.instructors.map(
+                                            (instructor) => (
+                                              <Strong key={instructor} caption>
+                                                {instructor}
+                                              </Strong>
+                                            )
+                                          )}
+                                        </div>
                                       </TableCell>
                                       <TableCell>
                                         {section.meetings.map(
