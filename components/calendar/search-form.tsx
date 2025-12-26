@@ -37,6 +37,7 @@ import { useUser } from '@clerk/nextjs';
 import { useTabContext } from './tab-context';
 import { Combobox, ComboboxLabel, ComboboxOption } from '../combobox';
 import { CourseIndex } from '@/app/api/cron/index-courses/route';
+import { Doc } from '@/convex/_generated/dataModel';
 
 type Term =
   paths['/v2/rest/websoc/terms']['get']['responses'][200]['content']['application/json']['data'][number];
@@ -375,7 +376,9 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                                   courseNumber:
                                                     course.courseNumber,
                                                   deptName: department.deptName,
-                                                  calendarId: activeTerm!._id,
+                                                  calendarId: (
+                                                    activeTerm as Doc<'calendars'>
+                                                  )?._id,
                                                 };
                                                 addToCalendarDb({
                                                   event: calendarEvent,
