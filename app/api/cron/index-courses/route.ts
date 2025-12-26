@@ -16,7 +16,7 @@ async function fetchAllCourses(): Promise<CourseIndex[]> {
 	let cursor: string | undefined;
 
 	while (true) {
-		// @ts-expect-error - openapi-fetch has circular type inference issues
+		// biome-ignore lint/suspicious/noExplicitAny: openapi-fetch has circular type inference issues
 		const { data, error } = await client.GET('/v2/rest/coursesCursor', {
 			params: { query: cursor ? { cursor } : {} },
 		});
