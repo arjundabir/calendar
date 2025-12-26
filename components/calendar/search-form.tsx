@@ -1,6 +1,5 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
 import { MinusIcon, PlusIcon } from '@heroicons/react/24/solid';
 import {
   Authenticated,
@@ -14,10 +13,10 @@ import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import z from 'zod';
 import { queryWebSoc } from '@/app/actions';
-import { CourseIndex } from '@/app/api/cron/index-courses/route';
+import type { CourseIndex } from '@/app/api/cron/index-courses/route';
 import { Select } from '@/components/select';
 import { api } from '@/convex/_generated/api';
-import { Doc } from '@/convex/_generated/dataModel';
+import type { Doc } from '@/convex/_generated/dataModel';
 import type { paths } from '@/types/anteater-api-types';
 import {
   Accordion,
@@ -74,7 +73,6 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
   }, []);
   const { tabs } = useTabContext();
 
-  const { isSignedIn } = useUser();
   const { calendarEvents, setCalendarEvents, removeCalendarEvent, activeTerm } =
     useCalendarContext();
 
@@ -194,7 +192,7 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                   ) || null
                 }
                 onChange={(course) => {
-                  if (course && course.department && course.courseNumber) {
+                  if (course?.department && course.courseNumber) {
                     field.onChange(
                       `${course.department} ${course.courseNumber}`
                     );

@@ -17,7 +17,7 @@ import {
   TableRow,
 } from '../table';
 import { Strong, Text, TextLink } from '../text';
-import { CalendarEvents, useCalendarContext } from './calendar-provider';
+import { type CalendarEvents, useCalendarContext } from './calendar-provider';
 import { useTabContext } from './tab-context';
 
 // Group calendar events by department and course
@@ -183,6 +183,7 @@ export function AddedCourses() {
                                     {section.meetings.map((meeting, idx) => {
                                       if (meeting.timeIsTBA) {
                                         return (
+                                          // biome-ignore lint/suspicious/noArrayIndexKey: just a boolean value
                                           <Text key={idx} caption>
                                             TBA
                                           </Text>
@@ -204,7 +205,10 @@ export function AddedCourses() {
                                         0
                                       );
                                       return (
-                                        <Strong key={idx} caption>
+                                        <Strong
+                                          key={`${startDate.toISOString()}-${endDate.toISOString()}`}
+                                          caption
+                                        >
                                           {format(startDate, 'h:mm a')}-
                                           {format(endDate, 'h:mm a')}
                                         </Strong>

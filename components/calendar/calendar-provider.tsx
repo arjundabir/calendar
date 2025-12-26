@@ -117,7 +117,7 @@ export function CalendarProvider({
 
   // Helper: Convert CalendarEvents to EventValidatorType by removing calendarId
   function calendarEventToEvent(calendarEvent: CalendarEvents): Event {
-    const { calendarId, ...event } = calendarEvent;
+    const { ...event } = calendarEvent;
     return event as Event;
   }
 
@@ -138,33 +138,6 @@ export function CalendarProvider({
 
   // Get flattened events for active term
   const calendarEvents = getFlattenedEvents(activeTerm?.calendarName);
-
-  // Helper: Add event to correct calendar group
-  function addEventToCalendar(event: Event, calendarName: string): void {
-    const currentEvents = [...localStorageEvents];
-    const calendarIndex = currentEvents.findIndex(
-      (group) => group.calendarName === calendarName
-    );
-
-    if (calendarIndex >= 0) {
-      // Calendar group exists, add event if not already present
-      const existingEvents = currentEvents[calendarIndex].events;
-      if (!existingEvents.some((e) => e.sectionCode === event.sectionCode)) {
-        currentEvents[calendarIndex] = {
-          ...currentEvents[calendarIndex],
-          events: [...existingEvents, event],
-        };
-      }
-    } else {
-      // Calendar group doesn't exist, create it
-      currentEvents.push({
-        calendarName,
-        events: [event],
-      });
-    }
-
-    setLocalStorageEvents(currentEvents);
-  }
 
   // Helper: Remove event from correct calendar group
   function removeEventFromCalendar(

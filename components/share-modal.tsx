@@ -44,9 +44,9 @@ export default function ShareModal({
           const user = await convex.query(api.users.getUser, {
             email: validation.data,
           });
-          if (user) {
+          if (user && inputRef.current) {
             setEmails((emails) => [...emails, user]);
-            inputRef.current!.value = '';
+            inputRef.current.value = '';
           } else {
             setError("User doesn't exist.");
             // TODO @arjundabir: resend emails
@@ -63,7 +63,7 @@ export default function ShareModal({
   async function handleShare() {
     try {
       await shareCalendar({
-        calendarId: activeCalendar!._id,
+        calendarId: (activeCalendar as Doc<'calendars'>)._id,
         emails: emails.map((email) => (email as Doc<'users'>)._id),
       });
       setEmails([]);
@@ -98,7 +98,8 @@ export default function ShareModal({
                         name={user.name}
                         handleDelete={() =>
                           unshareCalendar({
-                            calendarId: activeCalendar!._id,
+                            calendarId: (activeCalendar as Doc<'calendars'>)
+                              ._id,
                             userId: user._id,
                           })
                         }
