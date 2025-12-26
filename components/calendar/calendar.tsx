@@ -11,21 +11,47 @@ import { useCalendarContext } from './calendar-provider';
 
 export default function Calendar() {
   const { calendarEvents, activeTerm, isFinalsSchedule } = useCalendarContext();
-  const dbCalendarEvents = useQuery(api.calendar.getUserEvents);
+  const dbCalendarEvents = useQuery(api.events.queries.getUserEvents);
+  const sharedCalendarEvents = useQuery(
+    api.shares.queries.getSharedCalendarEvents
+  );
 
+  // Extract nested event objects and flatten structure for compatibility
   const dbCalendarEventsNoUserId =
-    dbCalendarEvents?.map(({ userId: _, ...rest }) => rest) ?? [];
+    dbCalendarEvents?.map(({ userId: _, calendarId, event, ...rest }) => ({
+      ...event,
+      calendarId: calendarId as string,
+      ...rest,
+    })) ?? [];
 
-  const transformedEvents = transformCalendarEvents(
-    calendarEvents.filter((event) => event.termId === activeTerm?._id)
-  );
-  const transformedDbEvents = transformCalendarEvents(dbCalendarEventsNoUserId);
+  // Build owner map from shared calendar events (maps calendarId to ownerId)
+  const ownerMap = new Map<string, string>();
+  const sharedEventsFlattened =
+    sharedCalendarEvents?.map(
+      ({ userId: _, calendarId, event, ownerId, ...rest }) => {
+        if (ownerId) {
+          ownerMap.set(calendarId as string, ownerId as string);
+        }
+        return {
+          ...event,
+          calendarId: calendarId as string,
+          ...rest,
+        };
+      }
+    ) ?? [];
 
-  const transformedFinalsEvents = transformFinalsEvents(
-    calendarEvents.filter((event) => event.termId === activeTerm?._id)
+  const transformedEvents = transformCalendarEvents(calendarEvents);
+  const transformedDbEvents = transformCalendarEvents(
+    [...dbCalendarEventsNoUserId, ...sharedEventsFlattened],
+    undefined,
+    ownerMap
   );
+
+  const transformedFinalsEvents = transformFinalsEvents(calendarEvents);
   const transformedDbFinalsEvents = transformFinalsEvents(
-    dbCalendarEventsNoUserId
+    [...dbCalendarEventsNoUserId, ...sharedEventsFlattened],
+    undefined,
+    ownerMap
   );
 
   return (
@@ -107,7 +133,9 @@ export default function Calendar() {
                     : transformedDbEvents}
                 </Authenticated>
                 <Unauthenticated>
-                  {isFinalsSchedule ? transformedFinalsEvents : transformedEvents}
+                  {isFinalsSchedule
+                    ? transformedFinalsEvents
+                    : transformedEvents}
                 </Unauthenticated>
               </CalendarList>
             </div>

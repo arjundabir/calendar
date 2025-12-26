@@ -6,7 +6,7 @@ import { Select } from '@/components/select';
 import z from 'zod';
 import { useForm, Controller } from 'react-hook-form';
 import { queryWebSoc } from '@/app/actions';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -37,6 +37,7 @@ import { useUser } from '@clerk/nextjs';
 import { useTabContext } from './tab-context';
 import { Combobox, ComboboxLabel, ComboboxOption } from '../combobox';
 import { CourseIndex } from '@/app/api/cron/index-courses/route';
+import { Doc } from '@/convex/_generated/dataModel';
 
 type Term =
   paths['/v2/rest/websoc/terms']['get']['responses'][200]['content']['application/json']['data'][number];
@@ -53,14 +54,23 @@ const searchCourseSchema = z.object({
 });
 type SearchCourseType = z.infer<typeof searchCourseSchema>;
 
-export default function SearchForm({
-  websocTerms,
-  coursesIndex,
-}: {
-  websocTerms: Term[];
-  coursesIndex: CourseIndex[];
-}) {
+export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
   const [webSocData, setWebSocData] = useState<WebSocData | null>(null);
+  const [coursesIndex, setCoursesIndex] = useState<CourseIndex[]>([]);
+
+  useEffect(() => {
+    async function getCoursesIndex() {
+      const response = await fetch('/api/search/suggestions', {
+        cache: 'force-cache',
+        next: {
+          revalidate: 60 * 60 * 24 * 30,
+        },
+      });
+      const coursesIndex = (await response.json()) as CourseIndex[];
+      setCoursesIndex(coursesIndex);
+    }
+    getCoursesIndex();
+  }, []);
   const { tabs } = useTabContext();
 
   const { isSignedIn } = useUser();
@@ -72,7 +82,7 @@ export default function SearchForm({
     course: '',
   };
 
-  const { handleSubmit, register, control } = useForm({
+  const { handleSubmit, control } = useForm({
     defaultValues: initialValues,
   });
 
@@ -105,11 +115,11 @@ export default function SearchForm({
     );
   }
 
-  const getCalendarEvents = useQuery(api.calendar.getUserEvents);
+  const getCalendarEvents = useQuery(api.events.queries.getUserEvents);
   const addToCalendarDb = useMutation(
-    api.calendar.createCalendarEvent
+    api.events.mutations.createCalendarEvent
   ).withOptimisticUpdate((localStore, args) => {
-    const currentEvents = localStore.getQuery(api.calendar.getUserEvents);
+    const currentEvents = localStore.getQuery(api.events.queries.getUserEvents);
     if (!currentEvents) return;
 
     const userId =
@@ -117,25 +127,26 @@ export default function SearchForm({
       ({ __tableName: 'users' } as (typeof currentEvents)[0]['userId']);
 
     const tempEvent = {
-      ...args.event,
       userId,
+      calendarId: args.event.calendarId,
+      event: args.event,
       _id: `temp_${args.event.sectionCode}` as (typeof currentEvents)[0]['_id'],
       _creationTime: Date.now(),
     };
 
     const updatedEvents = [...currentEvents, tempEvent];
-    localStore.setQuery(api.calendar.getUserEvents, {}, updatedEvents);
+    localStore.setQuery(api.events.queries.getUserEvents, {}, updatedEvents);
   });
   const deleteCalendarEvent = useMutation(
-    api.calendar.deleteCalendarEvent
+    api.events.mutations.deleteCalendarEvent
   ).withOptimisticUpdate((localStore, args) => {
-    const currentEvents = localStore.getQuery(api.calendar.getUserEvents);
+    const currentEvents = localStore.getQuery(api.events.queries.getUserEvents);
     if (!currentEvents) return;
 
     const updatedEvents = currentEvents.filter(
-      (event) => event.sectionCode !== args.sectionCode
+      (event) => event.event.sectionCode !== args.sectionCode
     );
-    localStore.setQuery(api.calendar.getUserEvents, {}, updatedEvents);
+    localStore.setQuery(api.events.queries.getUserEvents, {}, updatedEvents);
   });
 
   return (
@@ -227,6 +238,7 @@ export default function SearchForm({
                       </AccordionButton>
                       <AccordionPanel>
                         <Text
+                          // biome-ignore lint/security/noDangerouslySetInnerHtml: we trust the data
                           dangerouslySetInnerHTML={{
                             __html: school.schoolComment,
                           }}
@@ -252,17 +264,17 @@ export default function SearchForm({
                               )}
                             </AccordionButton>
                             <AccordionPanel>
-                              {department.sectionCodeRangeComments &&
-                                department.sectionCodeRangeComments.map(
-                                  (sectionCodeRangeComment, index) => (
-                                    <Text
-                                      key={index}
-                                      dangerouslySetInnerHTML={{
-                                        __html: sectionCodeRangeComment,
-                                      }}
-                                    />
-                                  )
-                                )}
+                              {department.sectionCodeRangeComments?.map(
+                                (sectionCodeRangeComment) => (
+                                  <Text
+                                    key={sectionCodeRangeComment}
+                                    // biome-ignore lint/security/noDangerouslySetInnerHtml: we trust the data
+                                    dangerouslySetInnerHTML={{
+                                      __html: sectionCodeRangeComment,
+                                    }}
+                                  />
+                                )
+                              )}
                             </AccordionPanel>
                           </Accordion>
                         ) : (
@@ -290,6 +302,7 @@ export default function SearchForm({
                                   {course.courseTitle}
                                 </Subheading>
                                 <Text
+                                  // biome-ignore lint/security/noDangerouslySetInnerHtml: we trust the data
                                   dangerouslySetInnerHTML={{
                                     __html: course.courseComment,
                                   }}
@@ -323,6 +336,7 @@ export default function SearchForm({
                                         <TableCell colSpan={11}>
                                           <Text
                                             caption
+                                            // biome-ignore lint/security/noDangerouslySetInnerHtml: we trust the data
                                             dangerouslySetInnerHTML={{
                                               __html: section.sectionComment,
                                             }}
@@ -335,23 +349,18 @@ export default function SearchForm({
                                         <TableCell className="px-0!">
                                           {getCalendarEvents?.some(
                                             (calendarEvent) =>
-                                              calendarEvent.sectionCode ===
+                                              calendarEvent.event
+                                                .sectionCode ===
                                               section.sectionCode
                                           ) ? (
                                             <Button
                                               type="button"
                                               plain
                                               onClick={() => {
-                                                if (isSignedIn) {
-                                                  deleteCalendarEvent({
-                                                    sectionCode:
-                                                      section.sectionCode,
-                                                  });
-                                                } else {
-                                                  removeCalendarEvent(
-                                                    section.sectionCode
-                                                  );
-                                                }
+                                                deleteCalendarEvent({
+                                                  sectionCode:
+                                                    section.sectionCode,
+                                                });
                                               }}
                                             >
                                               <MinusIcon className="size-4" />
@@ -367,13 +376,13 @@ export default function SearchForm({
                                                   courseNumber:
                                                     course.courseNumber,
                                                   deptName: department.deptName,
-                                                  termId: activeTerm!._id,
+                                                  calendarId: (
+                                                    activeTerm as Doc<'calendars'>
+                                                  )?._id,
                                                 };
-                                                if (isSignedIn) {
-                                                  addToCalendarDb({
-                                                    event: calendarEvent,
-                                                  });
-                                                }
+                                                addToCalendarDb({
+                                                  event: calendarEvent,
+                                                });
                                               }}
                                             >
                                               <PlusIcon className="size-4" />
@@ -388,17 +397,9 @@ export default function SearchForm({
                                               type="button"
                                               plain
                                               onClick={() => {
-                                                // TODO: fix auth and unauth state later
-                                                if (isSignedIn) {
-                                                  deleteCalendarEvent({
-                                                    sectionCode:
-                                                      section.sectionCode,
-                                                  });
-                                                } else {
-                                                  removeCalendarEvent(
-                                                    section.sectionCode
-                                                  );
-                                                }
+                                                removeCalendarEvent(
+                                                  section.sectionCode
+                                                );
                                               }}
                                             >
                                               <MinusIcon className="size-4" />
@@ -408,24 +409,21 @@ export default function SearchForm({
                                               type="button"
                                               plain
                                               onClick={() => {
+                                                const calendarName =
+                                                  activeTerm?.calendarName ||
+                                                  '';
                                                 const calendarEvent = {
                                                   ...section,
                                                   deptCode: course.deptCode,
                                                   courseNumber:
                                                     course.courseNumber,
                                                   deptName: department.deptName,
-                                                  termId: activeTerm!._id,
+                                                  calendarId: calendarName,
                                                 };
-                                                if (isSignedIn) {
-                                                  addToCalendarDb({
-                                                    event: calendarEvent,
-                                                  });
-                                                } else {
-                                                  setCalendarEvents([
-                                                    ...calendarEvents,
-                                                    calendarEvent,
-                                                  ]);
-                                                }
+                                                setCalendarEvents([
+                                                  ...calendarEvents,
+                                                  calendarEvent,
+                                                ]);
                                               }}
                                             >
                                               <PlusIcon className="size-4" />
@@ -471,10 +469,13 @@ export default function SearchForm({
                                       </TableCell>
                                       <TableCell>
                                         {section.meetings.map(
-                                          (meeting, idx) => {
+                                          (meeting, meetingIndex) => {
                                             if (meeting.timeIsTBA) {
                                               return (
-                                                <Text key={idx} caption>
+                                                <Text
+                                                  key={`${meetingIndex}-${meeting.timeIsTBA}`}
+                                                  caption
+                                                >
                                                   TBA
                                                 </Text>
                                               );
@@ -495,7 +496,10 @@ export default function SearchForm({
                                               0
                                             );
                                             return (
-                                              <Strong key={idx} caption>
+                                              <Strong
+                                                key={`${meetingIndex}-${meeting.timeIsTBA}`}
+                                                caption
+                                              >
                                                 {format(startDate, 'h:mm a')}-
                                                 {format(endDate, 'h:mm a')}
                                               </Strong>

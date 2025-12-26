@@ -5,19 +5,16 @@ import { TabProvider } from '@/components/calendar/tab-context';
 import { CalendarProvider } from '@/components/calendar/calendar-provider';
 import { getWebSocTerms, listAllCalendars } from './actions';
 import { AddedCourses } from '@/components/calendar/added-courses';
-import fs from 'node:fs';
 import { getLatestSocAvailable } from '@/lib/calendar/terms-helper';
 import { preloadQuery } from 'convex/nextjs';
 import { api } from '@/convex/_generated/api';
 
 export default async function Home() {
-  const [websocTerms, coursesIndex, allCalendars, preloadedTerms] =
-    await Promise.all([
-      getWebSocTerms(),
-      fs.promises.readFile(`${process.cwd()}/public/course-index.json`, 'utf8'),
-      listAllCalendars(),
-      preloadQuery(api.term.getTerms),
-    ]);
+  const [websocTerms, allCalendars, preloadedTerms] = await Promise.all([
+    getWebSocTerms(),
+    listAllCalendars(),
+    preloadQuery(api.calendars.queries.getCalendars),
+  ]);
 
   return (
     <CalendarProvider
@@ -31,10 +28,7 @@ export default async function Home() {
         <section className="h-full overflow-y-auto ring-1 ring-black/5 shadow">
           <TabProvider>
             <CalendarTabs />
-            <SearchForm
-              websocTerms={websocTerms}
-              coursesIndex={JSON.parse(coursesIndex)}
-            />
+            <SearchForm websocTerms={websocTerms} />
             <AddedCourses />
           </TabProvider>
         </section>
