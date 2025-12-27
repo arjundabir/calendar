@@ -83,11 +83,11 @@ export function useCalendarContext() {
 export function CalendarProvider({
   children,
   latestTerm,
-  preloadedTerms,
+  preloadedCalendars,
 }: {
   children: ReactNode;
   latestTerm: Calendar;
-  preloadedTerms: Preloaded<typeof api.calendars.queries.getCalendars>;
+  preloadedCalendars: Preloaded<typeof api.calendars.queries.getCalendars>;
 }) {
   const [localStorageEvents, setLocalStorageEvents] = useLocalStorage<
     LocalStorageEvent[]
@@ -97,9 +97,10 @@ export function CalendarProvider({
   >('calendars', []);
   const [isFinalsSchedule, setIsFinalsSchedule] = useState<boolean>(false);
   const [isDialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [events, setEvents] = useState([]);
 
   const { isAuthenticated } = useStoreUserEffect();
-  const calendars = usePreloadedQuery(preloadedTerms);
+  const calendars = usePreloadedQuery(preloadedCalendars);
   const activeTerm = isAuthenticated
     ? calendars?.find((calendar) => calendar.isActive)
     : calendarsLocalStorage.find((calendar) => calendar.isActive);
