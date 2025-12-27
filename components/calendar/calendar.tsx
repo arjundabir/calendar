@@ -10,7 +10,7 @@ import { CalendarList } from './calendar-event';
 import { useCalendarContext } from './calendar-provider';
 
 export default function Calendar() {
-  const { calendarEvents, activeTerm, isFinalsSchedule } = useCalendarContext();
+  const { calendarEvents, isFinalsSchedule } = useCalendarContext();
   const dbCalendarEvents = useQuery(api.events.queries.getUserEvents);
   const sharedCalendarEvents = useQuery(
     api.shares.queries.getSharedCalendarEvents

@@ -1,5 +1,5 @@
-import { format, parseISO, isAfter } from 'date-fns';
-import { paths } from '@/types/anteater-api-types';
+import { format, isAfter, parseISO } from 'date-fns';
+import type { paths } from '@/types/anteater-api-types';
 
 type Calendars =
 	paths['/v2/rest/calendar/all']['get']['responses'][200]['content']['application/json']['data'];

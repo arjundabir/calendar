@@ -1,5 +1,5 @@
-import { paths } from '@/types/anteater-api-types';
 import createClient from 'openapi-fetch';
+import type { paths } from '@/types/anteater-api-types';
 
 const client = createClient<paths>({ baseUrl: 'https://anteaterapi.com' });
 

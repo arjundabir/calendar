@@ -1,8 +1,8 @@
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { NextResponse } from 'next/server';
 import createClient from 'openapi-fetch';
 import type { paths } from '@/types/anteater-api-types';
-import { NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
-import path from 'path';
 
 export interface CourseIndex {
 	department: string;
@@ -13,10 +13,9 @@ export interface CourseIndex {
 async function fetchAllCourses(): Promise<CourseIndex[]> {
 	const client = createClient<paths>({ baseUrl: 'https://anteaterapi.com' });
 	const courses: CourseIndex[] = [];
-	let cursor: string | undefined = undefined;
+	let cursor: string | undefined;
 
 	while (true) {
-		// @ts-expect-error - openapi-fetch has circular type inference issues
 		const { data, error } = await client.GET('/v2/rest/coursesCursor', {
 			params: { query: cursor ? { cursor } : {} },
 		});

@@ -1,9 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import { useLocalStorage } from 'usehooks-ts';
-import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from '../navbar';
+import { SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
+import { CalendarIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid';
 import {
   Authenticated,
   AuthLoading,
@@ -13,13 +11,17 @@ import {
   usePreloadedQuery,
   useQuery,
 } from 'convex/react';
-import { SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
-import { TrashIcon, CalendarIcon, PlusIcon } from '@heroicons/react/24/solid';
-import type { paths } from '@/types/anteater-api-types';
+import type { ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { useLocalStorage } from 'usehooks-ts';
 import { api } from '@/convex/_generated/api';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
-import { Input } from '../input';
 import { useStoreUserEffect } from '@/hooks/useStoreUserEffect';
+import type { paths } from '@/types/anteater-api-types';
+import { Checkbox, CheckboxField, CheckboxGroup } from '../checkbox';
+import { Description } from '../fieldset';
+import { Input } from '../input';
+import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from '../navbar';
 import ShareModal from '../share-modal';
 import {
   Sidebar,
@@ -29,8 +31,6 @@ import {
   SidebarLabel,
   SidebarSection,
 } from '../sidebar';
-import { Checkbox, CheckboxField, CheckboxGroup } from '../checkbox';
-import { Description } from '../fieldset';
 
 // Navigate through the nested websoc response structure to get the correct types
 type WebSocData =
@@ -117,7 +117,7 @@ export function CalendarProvider({
 
   // Helper: Convert CalendarEvents to EventValidatorType by removing calendarId
   function calendarEventToEvent(calendarEvent: CalendarEvents): Event {
-    const { calendarId, ...event } = calendarEvent;
+    const { ...event } = calendarEvent;
     return event as Event;
   }
 
@@ -138,33 +138,6 @@ export function CalendarProvider({
 
   // Get flattened events for active term
   const calendarEvents = getFlattenedEvents(activeTerm?.calendarName);
-
-  // Helper: Add event to correct calendar group
-  function addEventToCalendar(event: Event, calendarName: string): void {
-    const currentEvents = [...localStorageEvents];
-    const calendarIndex = currentEvents.findIndex(
-      (group) => group.calendarName === calendarName
-    );
-
-    if (calendarIndex >= 0) {
-      // Calendar group exists, add event if not already present
-      const existingEvents = currentEvents[calendarIndex].events;
-      if (!existingEvents.some((e) => e.sectionCode === event.sectionCode)) {
-        currentEvents[calendarIndex] = {
-          ...currentEvents[calendarIndex],
-          events: [...existingEvents, event],
-        };
-      }
-    } else {
-      // Calendar group doesn't exist, create it
-      currentEvents.push({
-        calendarName,
-        events: [event],
-      });
-    }
-
-    setLocalStorageEvents(currentEvents);
-  }
 
   // Helper: Remove event from correct calendar group
   function removeEventFromCalendar(

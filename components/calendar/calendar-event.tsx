@@ -1,13 +1,3 @@
-import type { ReactNode } from 'react';
-import { z } from 'zod';
-import type { CalendarEvents } from './calendar-provider';
-import { Button } from '../button';
-import {
-  Popover,
-  PopoverButton,
-  PopoverDivider,
-  PopoverPanel,
-} from '../popover';
 import {
   AcademicCapIcon,
   ClipboardIcon,
@@ -16,6 +6,16 @@ import {
   TrashIcon,
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
+import type { ReactNode } from 'react';
+import { z } from 'zod';
+import { Button } from '../button';
+import {
+  Popover,
+  PopoverButton,
+  PopoverDivider,
+  PopoverPanel,
+} from '../popover';
+import type { CalendarEvents } from './calendar-provider';
 
 function CalendarList({ children }: { children: ReactNode }) {
   return (

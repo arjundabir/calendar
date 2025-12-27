@@ -1,9 +1,10 @@
 import * as Headless from '@headlessui/react';
 import clsx from 'clsx';
-import React, { forwardRef } from 'react';
+import Image from 'next/image';
+import type React from 'react';
+import { forwardRef } from 'react';
 import { TouchTarget } from './button';
 import { Link } from './link';
-import Image from 'next/image';
 
 type AvatarProps = {
   src?: string | null;
@@ -42,7 +43,7 @@ export function Avatar({
           viewBox="0 0 100 100"
           aria-hidden={alt ? undefined : 'true'}
         >
-          {alt && <title>{alt}</title>}
+          <title>{alt ?? 'Initials Avatar Icon'}</title>
           <text
             x="50%"
             y="50%"
@@ -86,7 +87,7 @@ export const AvatarButton = forwardRef(function AvatarButton(
     ),
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
-  let classes = clsx(
+  const classes = clsx(
     className,
     square ? 'rounded-[20%]' : 'rounded-full',
     'relative inline-grid focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-blue-500'

@@ -1,17 +1,17 @@
 'use client';
 
-import { Dialog, DialogTitle, DialogDescription } from '@/components/dialog';
-import { DialogBody, DialogActions } from './dialog';
-import { ErrorMessage, Field, FieldGroup, Label } from './fieldset';
-import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import { Input } from './input';
-import { Button } from './button';
-import z from 'zod';
 import { XMarkIcon } from '@heroicons/react/24/solid';
 import { useConvex, useMutation, useQuery } from 'convex/react';
+import { type Dispatch, type SetStateAction, useRef, useState } from 'react';
+import z from 'zod';
+import { Dialog, DialogDescription, DialogTitle } from '@/components/dialog';
 import { api } from '@/convex/_generated/api';
 import type { Doc } from '@/convex/_generated/dataModel';
 import { Avatar } from './avatar';
+import { Button } from './button';
+import { DialogActions, DialogBody } from './dialog';
+import { ErrorMessage, Field, FieldGroup, Label } from './fieldset';
+import { Input } from './input';
 import { Strong, Text } from './text';
 
 const emailSchema = z.email({ message: 'Invalid email address' });
@@ -44,9 +44,9 @@ export default function ShareModal({
           const user = await convex.query(api.users.getUser, {
             email: validation.data,
           });
-          if (user) {
+          if (user && inputRef.current) {
             setEmails((emails) => [...emails, user]);
-            inputRef.current!.value = '';
+            inputRef.current.value = '';
           } else {
             setError("User doesn't exist.");
             // TODO @arjundabir: resend emails
@@ -63,7 +63,7 @@ export default function ShareModal({
   async function handleShare() {
     try {
       await shareCalendar({
-        calendarId: activeCalendar!._id,
+        calendarId: (activeCalendar as Doc<'calendars'>)._id,
         emails: emails.map((email) => (email as Doc<'users'>)._id),
       });
       setEmails([]);
@@ -98,7 +98,8 @@ export default function ShareModal({
                         name={user.name}
                         handleDelete={() =>
                           unshareCalendar({
-                            calendarId: activeCalendar!._id,
+                            calendarId: (activeCalendar as Doc<'calendars'>)
+                              ._id,
                             userId: user._id,
                           })
                         }
