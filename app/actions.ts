@@ -1,10 +1,15 @@
 import createClient from 'openapi-fetch';
 import type { paths } from '@/types/anteater-api-types';
 
+const DAY_CACHE = 60 * 60 * 24 * 30;
+
 const client = createClient<paths>({ baseUrl: 'https://anteaterapi.com' });
 
 async function getWebSocTerms() {
-	const { data, error } = await client.GET('/v2/rest/websoc/terms');
+	const { data, error } = await client.GET('/v2/rest/websoc/terms', {
+		cache: 'force-cache',
+		next: { revalidate: DAY_CACHE },
+	});
 	// In anteater-api-types, error object has ok: false if there was an error.
 	if (error) return [];
 
