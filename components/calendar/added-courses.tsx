@@ -6,8 +6,8 @@ import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
 import { Fragment, useMemo } from 'react';
 import { api } from '@/convex/_generated/api';
-import { Button } from '../button';
-import { Heading, Subheading } from '../heading';
+import { Button } from '../ui/button';
+import { Heading, Subheading } from '../ui/heading';
 import {
   Table,
   TableBody,
@@ -15,8 +15,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../table';
-import { Strong, Text, TextLink } from '../text';
+} from '../ui/table';
+import { Strong, Text, TextLink } from '../ui/text';
 import { type CalendarEvents, useCalendarContext } from './calendar-provider';
 import { useTabContext } from './tab-context';
 

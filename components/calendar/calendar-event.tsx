@@ -8,13 +8,13 @@ import {
 import { format } from 'date-fns';
 import type { ReactNode } from 'react';
 import { z } from 'zod';
-import { Button } from '../button';
+import { Button } from '../ui/button';
 import {
   Popover,
   PopoverButton,
   PopoverDivider,
   PopoverPanel,
-} from '../popover';
+} from '../ui/popover';
 import type { CalendarEvents } from './calendar-provider';
 
 function CalendarList({ children }: { children: ReactNode }) {

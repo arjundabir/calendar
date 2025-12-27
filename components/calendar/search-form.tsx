@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import z from 'zod';
 import { queryWebSoc } from '@/app/actions';
 import type { CourseIndex } from '@/app/api/cron/index-courses/route';
-import { Select } from '@/components/select';
+import { Select } from '@/components/ui/select';
 import { api } from '@/convex/_generated/api';
 import type { Doc } from '@/convex/_generated/dataModel';
 import type { paths } from '@/types/anteater-api-types';
@@ -23,10 +23,10 @@ import {
   AccordionButton,
   AccordionGroup,
   AccordionPanel,
-} from '../accordion';
-import { Button } from '../button';
-import { Combobox, ComboboxLabel, ComboboxOption } from '../combobox';
-import { Heading, Subheading } from '../heading';
+} from '../ui/accordion';
+import { Button } from '../ui/button';
+import { Combobox, ComboboxLabel, ComboboxOption } from '../ui/combobox';
+import { Heading, Subheading } from '../ui/heading';
 import {
   Table,
   TableBody,
@@ -34,8 +34,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../table';
-import { Strong, Text, TextLink } from '../text';
+} from '../ui/table';
+import { Strong, Text, TextLink } from '../ui/text';
 import { useCalendarContext } from './calendar-provider';
 import { useTabContext } from './tab-context';
 

@@ -18,10 +18,10 @@ import { api } from '@/convex/_generated/api';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { useStoreUserEffect } from '@/hooks/useStoreUserEffect';
 import type { paths } from '@/types/anteater-api-types';
-import { Checkbox, CheckboxField, CheckboxGroup } from '../checkbox';
-import { Description } from '../fieldset';
-import { Input } from '../input';
-import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from '../navbar';
+import { Checkbox, CheckboxField, CheckboxGroup } from '../ui/checkbox';
+import { Description } from '../ui/fieldset';
+import { Input } from '../ui/input';
+import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from '../ui/navbar';
 import ShareModal from '../share-modal';
 import {
   Sidebar,
@@ -30,7 +30,7 @@ import {
   SidebarItem,
   SidebarLabel,
   SidebarSection,
-} from '../sidebar';
+} from '../ui/sidebar';
 
 // Navigate through the nested websoc response structure to get the correct types
 type WebSocData =
