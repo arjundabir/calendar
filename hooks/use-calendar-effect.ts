@@ -5,8 +5,6 @@ import { useConvexAuth, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 
-// TODO (@arjundabir): have a way to update local or user calendar
-
 export function useCalendarEvent(): Doc<'events'>[] | null {
 	const { isAuthenticated, isLoading } = useConvexAuth();
 	const { localStorageEvents } = useCalendarContext();

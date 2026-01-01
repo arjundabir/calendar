@@ -19,10 +19,11 @@ import {
 import { Strong, Text, TextLink } from '../ui/text';
 import { type CalendarEvents, useCalendarContext } from './calendar-provider';
 import { useTabContext } from './tab-context';
+import type { Doc } from '@/convex/_generated/dataModel';
 
-// Group calendar events by department and course
-function groupEventsByCourse(events: CalendarEvents[]) {
-  const grouped: Record<string, Record<string, CalendarEvents[]>> = {};
+type Event = Doc<'events'>['event'];
+function groupEventsByCourse(events: Event[]) {
+  const grouped: Record<string, Record<string, Event[]>> = {};
 
   events.forEach((event) => {
     const deptKey = `${event.deptCode}-${event.deptName}`;
@@ -43,7 +44,7 @@ function groupEventsByCourse(events: CalendarEvents[]) {
 export function AddedCourses() {
   const { tabs } = useTabContext();
   const { isSignedIn } = useUser();
-  const { calendarEvents, removeCalendarEvent } = useCalendarContext();
+  const { localStorageEvents, setLocalStorageEvents } = useCalendarContext();
 
   const getCalendarEvents = useQuery(api.events.queries.getUserEvents);
   const deleteCalendarEvent = useMutation(
@@ -52,7 +53,7 @@ export function AddedCourses() {
 
   // Combine local and database events
   const allEvents = useMemo(() => {
-    const localEvents = calendarEvents || [];
+    const localEvents = localStorageEvents.flatMap((e) => e.events) || [];
     const dbEvents = getCalendarEvents || [];
 
     // For authenticated users, use database events
@@ -66,7 +67,7 @@ export function AddedCourses() {
       })) as CalendarEvents[];
     }
     return localEvents;
-  }, [calendarEvents, getCalendarEvents, isSignedIn]);
+  }, [localStorageEvents, getCalendarEvents, isSignedIn]);
 
   const groupedEvents = useMemo(
     () => groupEventsByCourse(allEvents),
@@ -77,7 +78,14 @@ export function AddedCourses() {
     if (isSignedIn) {
       deleteCalendarEvent({ sectionCode });
     } else {
-      removeCalendarEvent(sectionCode);
+      setLocalStorageEvents((prevEvents) =>
+        prevEvents.map((calendar) => ({
+          ...calendar,
+          events: calendar.events.filter(
+            (event) => event.sectionCode !== sectionCode
+          ),
+        }))
+      );
     }
   };
 
