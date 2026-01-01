@@ -56,33 +56,53 @@ export function renderNormalizedEvents(
 		points.sort((a, b) =>
 			a.time !== b.time ? a.time - b.time : a.type === 'start' ? -1 : 1,
 		);
-		const active = new Map<string, number>();
-		const freeLanes: number[] = [];
+		const active = new Map<string, number>(); // id -> lane
+		let freeLanes: number[] = [];
 		let nextLane = 0;
-		let prevTime: number | null = null;
+
 		let clusterMax = 0;
+		let clusterMembers = new Set<string>(); // only events in this cluster
+
+		let prevTime: number | null = null;
 
 		for (const point of points) {
-			if (prevTime !== null && point.time > prevTime) {
+			if (prevTime !== null && point.time > prevTime && active.size > 0) {
 				clusterMax = Math.max(clusterMax, active.size);
-
-				for (const [id, lane] of active) {
-					const e = renderEventsMap.get(id)!;
-					e.overlapIndex = lane;
-					e.overlapCount = clusterMax;
-				}
 			}
 
 			if (point.type === 'start') {
 				const lane = freeLanes.pop() ?? nextLane++;
 				active.set(point.id, lane);
+				clusterMembers.add(point.id);
+
+				clusterMax = Math.max(clusterMax, active.size);
 			} else {
 				const lane = active.get(point.id);
 				if (lane !== undefined) {
 					freeLanes.push(lane);
 					active.delete(point.id);
 				}
-				if (active.size === 0) clusterMax = 0;
+
+				if (active.size === 0 && clusterMembers.size > 0) {
+					for (const id of clusterMembers) {
+						const e = renderEventsMap.get(id);
+						if (!e) throw Error('not found in rendered events');
+
+						e.overlapIndex = e.overlapIndex ?? 0; // set at start below
+						e.overlapCount = clusterMax;
+					}
+
+					clusterMembers = new Set();
+					clusterMax = 0;
+					freeLanes = [];
+					nextLane = 0;
+				}
+			}
+
+			if (point.type === 'start') {
+				const e = renderEventsMap.get(point.id);
+				if (!e) throw Error('not found in rendered events');
+				e.overlapIndex = active.get(point.id)!; // 0-based lane
 			}
 
 			prevTime = point.time;
