@@ -11,15 +11,14 @@ import {
   usePreloadedQuery,
   useQuery,
 } from 'convex/react';
-import type { ReactNode } from 'react';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
 import { api } from '@/convex/_generated/api';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { useStoreUserEffect } from '@/hooks/useStoreUserEffect';
 import type { paths } from '@/types/anteater-api-types';
-import { Checkbox, CheckboxField, CheckboxGroup } from '../ui/checkbox';
-import { Description } from '../ui/fieldset';
+import { Checkbox } from '../ui/checkbox';
 import { Input } from '../ui/input';
 import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from '../ui/navbar';
 import ShareModal from '../share-modal';
@@ -32,7 +31,6 @@ import {
   SidebarSection,
 } from '../ui/sidebar';
 
-// Navigate through the nested websoc response structure to get the correct types
 type WebSocData =
   paths['/v2/rest/websoc']['get']['responses'][200]['content']['application/json']['data'];
 type WebSocSection =
@@ -58,18 +56,22 @@ type LocalStorageEvent = {
   events: Event[];
 };
 
+// TODO (@arjundabir): remove calendarEvents and events and just keep localStorageEvents
+
 type CalendarContextType = {
+  localStorageEvents: LocalStorageEvent[] | [];
+  setLocalStorageEvents: Dispatch<SetStateAction<LocalStorageEvent[]>>;
   calendarEvents: CalendarEvents[] | [];
   setCalendarEvents: (events: CalendarEvents[] | []) => void;
   removeCalendarEvent: (sectionCode: string) => void;
   activeTerm: (Doc<'calendars'> | LocalCalendar) | undefined;
   isFinalsSchedule: boolean;
+  events: Event[];
+  setEvents: (events: any) => void;
 };
-
 const CalendarContext = createContext<CalendarContextType | undefined>(
   undefined
 );
-
 export function useCalendarContext() {
   const context = useContext(CalendarContext);
   if (context === undefined) {
@@ -176,6 +178,7 @@ export function CalendarProvider({
     // Group events by calendarName (though they should all be for activeTerm)
     const grouped: Record<string, Event[]> = {};
     events.forEach((event) => {
+      ``;
       const calendarName = event.calendarId || activeTerm.calendarName;
       if (!grouped[calendarName]) {
         grouped[calendarName] = [];
@@ -320,11 +323,15 @@ export function CalendarProvider({
   return (
     <CalendarContext.Provider
       value={{
+        localStorageEvents,
+        setLocalStorageEvents,
         calendarEvents,
         setCalendarEvents,
         removeCalendarEvent,
         activeTerm,
         isFinalsSchedule,
+        events,
+        setEvents,
       }}
     >
       <div className="grid grid-cols-[256px_1fr]">
@@ -433,15 +440,13 @@ export function CalendarProvider({
                         })
                       }
                     >
-                      <CheckboxGroup>
-                        <CheckboxField>
-                          <Checkbox checked={show} />
-                          <SidebarLabel>{calendar.calendarName}</SidebarLabel>
-                          <Description className="font-normal!">
-                            by {owner.name}
-                          </Description>
-                        </CheckboxField>
-                      </CheckboxGroup>
+                      <Checkbox checked={show} />
+                      <div className="flex flex-col">
+                        <SidebarLabel>{calendar.calendarName}</SidebarLabel>
+                        <span className="text-xs text-zinc-500">
+                          by {owner.name}
+                        </span>
+                      </div>
                     </SidebarItem>
                   ))}
                 </SidebarSection>

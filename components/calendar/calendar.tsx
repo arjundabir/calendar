@@ -1,69 +1,15 @@
 'use client';
 
-import { Authenticated, Unauthenticated, useQuery } from 'convex/react';
-import { api } from '@/convex/_generated/api';
-import {
-  transformCalendarEvents,
-  transformFinalsEvents,
-} from '@/lib/calendar/calendar-events-helper';
 import { CalendarEvent, CalendarList } from './calendar-event';
-import { useCalendarContext } from './calendar-provider';
 import { normalizeEvents } from '@/utils/calendar/calendar-normalizer';
 import { renderNormalizedEvents } from '@/utils/calendar/calendar-renderer';
+import { useCalendarEvent } from '@/hooks/use-calendar-effect';
 
 export default function Calendar() {
-  const { calendarEvents, isFinalsSchedule } = useCalendarContext();
-  const dbCalendarEvents = useQuery(api.events.queries.getUserEvents);
-  const sharedCalendarEvents = useQuery(
-    api.shares.queries.getSharedCalendarEvents
-  );
-  console.log(sharedCalendarEvents);
-  // TODO (@arjundabir): replace test with a better way to handle this
-  let test;
-  if (dbCalendarEvents && sharedCalendarEvents) {
-    test = renderNormalizedEvents(
-      normalizeEvents([...dbCalendarEvents, ...sharedCalendarEvents])
-    );
-  }
-
-  // Extract nested event objects and flatten structure for compatibility
-  const dbCalendarEventsNoUserId =
-    dbCalendarEvents?.map(({ userId: _, calendarId, event, ...rest }) => ({
-      ...event,
-      calendarId: calendarId as string,
-      ...rest,
-    })) ?? [];
-
-  // Build owner map from shared calendar events (maps calendarId to ownerId)
-  const ownerMap = new Map<string, string>();
-  const sharedEventsFlattened =
-    sharedCalendarEvents?.map(
-      ({ userId: _, calendarId, event, ownerId, ...rest }) => {
-        if (ownerId) {
-          ownerMap.set(calendarId as string, ownerId as string);
-        }
-        return {
-          ...event,
-          calendarId: calendarId as string,
-          ...rest,
-        };
-      }
-    ) ?? [];
-
-  const transformedEvents = transformCalendarEvents(calendarEvents);
-  const transformedDbEvents = transformCalendarEvents(
-    [...dbCalendarEventsNoUserId, ...sharedEventsFlattened],
-    undefined,
-    ownerMap
-  );
-
-  const transformedFinalsEvents = transformFinalsEvents(calendarEvents);
-  const transformedDbFinalsEvents = transformFinalsEvents(
-    [...dbCalendarEventsNoUserId, ...sharedEventsFlattened],
-    undefined,
-    ownerMap
-  );
-
+  const events = useCalendarEvent();
+  const renderEvents = events
+    ? renderNormalizedEvents(normalizeEvents(events))
+    : null;
   return (
     <div className="flex h-full flex-col">
       <div className="isolate flex flex-auto flex-col bg-white">
@@ -137,32 +83,25 @@ export default function Calendar() {
 
               {/* Events */}
               <CalendarList>
-                <Authenticated>
-                  {test?.map((t) => (
-                    <CalendarEvent
-                      key={`${t._id}-${t.dayOfWeek}`}
-                      dayOfWeek={t.dayOfWeek}
-                      startTime={t.startTime}
-                      endTime={t.endTime}
-                      color={t.color!}
-                      deptCode={t.deptCode}
-                      courseNumber={t.courseNumber}
-                      sectionType={t.sectionType}
-                      sectionCode={t.sectionCode}
-                      finalExam={t.finalExam}
-                      locations={t.bldg}
-                      instructors={t.instructors}
-                      overlapCount={t.overlapCount!}
-                      overlapIndex={t.overlapIndex!}
-                    />
-                  ))}
-                  {/* TODO (@arjundabir): implement finals schedule handling */}
-                </Authenticated>
-                <Unauthenticated>
-                  {isFinalsSchedule
-                    ? transformedFinalsEvents
-                    : transformedEvents}
-                </Unauthenticated>
+                {renderEvents?.map((re) => (
+                  <CalendarEvent
+                    key={`${re._id}-${re.dayOfWeek}`}
+                    dayOfWeek={re.dayOfWeek}
+                    startTime={re.startTime}
+                    endTime={re.endTime}
+                    color={re.color!}
+                    deptCode={re.deptCode}
+                    courseNumber={re.courseNumber}
+                    sectionType={re.sectionType}
+                    sectionCode={re.sectionCode}
+                    finalExam={re.finalExam}
+                    locations={re.bldg}
+                    instructors={re.instructors}
+                    overlapCount={re.overlapCount!}
+                    overlapIndex={re.overlapIndex!}
+                  />
+                ))}
+                {/* TODO (@arjundabir): implement finals schedule handling */}
               </CalendarList>
             </div>
           </div>
