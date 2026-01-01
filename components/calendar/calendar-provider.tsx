@@ -61,13 +61,8 @@ type LocalStorageEvent = {
 type CalendarContextType = {
   localStorageEvents: LocalStorageEvent[] | [];
   setLocalStorageEvents: Dispatch<SetStateAction<LocalStorageEvent[]>>;
-  calendarEvents: CalendarEvents[] | [];
-  setCalendarEvents: (events: CalendarEvents[] | []) => void;
-  removeCalendarEvent: (sectionCode: string) => void;
   activeTerm: (Doc<'calendars'> | LocalCalendar) | undefined;
   isFinalsSchedule: boolean;
-  events: Event[];
-  setEvents: (events: any) => void;
 };
 const CalendarContext = createContext<CalendarContextType | undefined>(
   undefined
@@ -99,120 +94,12 @@ export function CalendarProvider({
   >('calendars', []);
   const [isFinalsSchedule, setIsFinalsSchedule] = useState<boolean>(false);
   const [isDialogOpen, setDialogOpen] = useState<boolean>(false);
-  const [events, setEvents] = useState([]);
 
   const { isAuthenticated } = useStoreUserEffect();
   const calendars = usePreloadedQuery(preloadedCalendars);
   const activeTerm = isAuthenticated
     ? calendars?.find((calendar) => calendar.isActive)
     : calendarsLocalStorage.find((calendar) => calendar.isActive);
-
-  // Helper: Convert EventValidatorType to CalendarEvents by adding calendarId
-  function eventToCalendarEvent(
-    event: Event,
-    calendarName: string
-  ): CalendarEvents {
-    return {
-      ...event,
-      calendarId: calendarName,
-    } as CalendarEvents;
-  }
-
-  // Helper: Convert CalendarEvents to EventValidatorType by removing calendarId
-  function calendarEventToEvent(calendarEvent: CalendarEvents): Event {
-    const { ...event } = calendarEvent;
-    return event as Event;
-  }
-
-  // Helper: Get events for a specific calendarName
-  function getEventsForCalendar(calendarName: string): Event[] {
-    const calendarGroup = localStorageEvents.find(
-      (group) => group.calendarName === calendarName
-    );
-    return calendarGroup?.events ?? [];
-  }
-
-  // Helper: Flatten grouped structure to CalendarEvents array filtered by calendarName
-  function getFlattenedEvents(calendarName?: string): CalendarEvents[] {
-    if (!calendarName) return [];
-    const events = getEventsForCalendar(calendarName);
-    return events.map((event) => eventToCalendarEvent(event, calendarName));
-  }
-
-  // Get flattened events for active term
-  const calendarEvents = getFlattenedEvents(activeTerm?.calendarName);
-
-  // Helper: Remove event from correct calendar group
-  function removeEventFromCalendar(
-    sectionCode: string,
-    calendarName: string
-  ): void {
-    const currentEvents = [...localStorageEvents];
-    const calendarIndex = currentEvents.findIndex(
-      (group) => group.calendarName === calendarName
-    );
-
-    if (calendarIndex >= 0) {
-      const updatedEvents = currentEvents[calendarIndex].events.filter(
-        (event) => event.sectionCode !== sectionCode
-      );
-
-      if (updatedEvents.length === 0) {
-        // Remove calendar group if no events left
-        currentEvents.splice(calendarIndex, 1);
-      } else {
-        currentEvents[calendarIndex] = {
-          ...currentEvents[calendarIndex],
-          events: updatedEvents,
-        };
-      }
-
-      setLocalStorageEvents(currentEvents);
-    }
-  }
-
-  // setCalendarEvents: accepts CalendarEvents[] and stores them grouped by calendarName
-  function setCalendarEvents(events: CalendarEvents[]): void {
-    if (!activeTerm?.calendarName) return;
-
-    // Group events by calendarName (though they should all be for activeTerm)
-    const grouped: Record<string, Event[]> = {};
-    events.forEach((event) => {
-      ``;
-      const calendarName = event.calendarId || activeTerm.calendarName;
-      if (!grouped[calendarName]) {
-        grouped[calendarName] = [];
-      }
-      grouped[calendarName].push(calendarEventToEvent(event));
-    });
-
-    // Update localStorage
-    const currentEvents = [...localStorageEvents];
-    Object.entries(grouped).forEach(([calendarName, eventList]) => {
-      const calendarIndex = currentEvents.findIndex(
-        (group) => group.calendarName === calendarName
-      );
-
-      if (calendarIndex >= 0) {
-        currentEvents[calendarIndex] = {
-          calendarName,
-          events: eventList,
-        };
-      } else {
-        currentEvents.push({
-          calendarName,
-          events: eventList,
-        });
-      }
-    });
-
-    setLocalStorageEvents(currentEvents);
-  }
-
-  function removeCalendarEvent(sectionCode: string): void {
-    if (!activeTerm?.calendarName) return;
-    removeEventFromCalendar(sectionCode, activeTerm.calendarName);
-  }
 
   const [isCreatingNewCalendar, setIsCreatingNewCalendar] =
     useState<boolean>(false);
@@ -325,13 +212,8 @@ export function CalendarProvider({
       value={{
         localStorageEvents,
         setLocalStorageEvents,
-        calendarEvents,
-        setCalendarEvents,
-        removeCalendarEvent,
         activeTerm,
         isFinalsSchedule,
-        events,
-        setEvents,
       }}
     >
       <div className="grid grid-cols-[256px_1fr]">
