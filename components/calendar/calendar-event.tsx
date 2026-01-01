@@ -39,7 +39,7 @@ type TimeType = {
   hour: z.infer<typeof hourSchema>;
   minute: z.infer<typeof minuteSchema>;
 };
-type TailwindColors =
+export type TailwindColors =
   | 'red'
   | 'orange'
   | 'amber'
@@ -227,8 +227,9 @@ const colorClasses: Record<
     timeHover: 'group-hover:text-stone-700',
   },
 };
-interface CalendarEventType {
-  dayOfWeek: 'M' | 'T' | 'W' | 'Th' | 'F';
+export interface CalendarEventType {
+  // TODO @arjundabir: make sure to change from using T to using Tu for tuesdays
+  dayOfWeek: 'M' | 'T' | 'Tu' | 'W' | 'Th' | 'F';
   startTime: TimeType;
   endTime: TimeType;
   color: TailwindColors;
@@ -267,6 +268,7 @@ function CalendarEvent({
   const dayOfWeekId = {
     M: 1,
     T: 2,
+    Tu: 2,
     W: 3,
     Th: 4,
     F: 5,
@@ -278,6 +280,7 @@ function CalendarEvent({
       case 'M':
         return 'Monday';
       case 'T':
+      case 'Tu':
         return 'Tuesday';
       case 'W':
         return 'Wednesday';

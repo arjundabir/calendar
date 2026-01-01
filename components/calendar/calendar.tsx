@@ -6,8 +6,10 @@ import {
   transformCalendarEvents,
   transformFinalsEvents,
 } from '@/lib/calendar/calendar-events-helper';
-import { CalendarList } from './calendar-event';
+import { CalendarEvent, CalendarList } from './calendar-event';
 import { useCalendarContext } from './calendar-provider';
+import { normalizeEvents } from '@/utils/calendar/calendar-normalizer';
+import { renderNormalizedEvents } from '@/utils/calendar/calendar-renderer';
 
 export default function Calendar() {
   const { calendarEvents, isFinalsSchedule } = useCalendarContext();
@@ -15,6 +17,14 @@ export default function Calendar() {
   const sharedCalendarEvents = useQuery(
     api.shares.queries.getSharedCalendarEvents
   );
+  console.log(sharedCalendarEvents);
+  // TODO (@arjundabir): replace test with a better way to handle this
+  let test;
+  if (dbCalendarEvents && sharedCalendarEvents) {
+    test = renderNormalizedEvents(
+      normalizeEvents([...dbCalendarEvents, ...sharedCalendarEvents])
+    );
+  }
 
   // Extract nested event objects and flatten structure for compatibility
   const dbCalendarEventsNoUserId =
@@ -128,9 +138,25 @@ export default function Calendar() {
               {/* Events */}
               <CalendarList>
                 <Authenticated>
-                  {isFinalsSchedule
-                    ? transformedDbFinalsEvents
-                    : transformedDbEvents}
+                  {test?.map((t) => (
+                    <CalendarEvent
+                      key={`${t._id}-${t.dayOfWeek}`}
+                      dayOfWeek={t.dayOfWeek}
+                      startTime={t.startTime}
+                      endTime={t.endTime}
+                      color={t.color!}
+                      deptCode={t.deptCode}
+                      courseNumber={t.courseNumber}
+                      sectionType={t.sectionType}
+                      sectionCode={t.sectionCode}
+                      finalExam={t.finalExam}
+                      locations={t.bldg}
+                      instructors={t.instructors}
+                      overlapCount={t.overlapCount!}
+                      overlapIndex={t.overlapIndex!}
+                    />
+                  ))}
+                  {/* TODO (@arjundabir): implement finals schedule handling */}
                 </Authenticated>
                 <Unauthenticated>
                   {isFinalsSchedule

@@ -1,0 +1,129 @@
+import type { TailwindColors } from '@/components/calendar/calendar-event';
+import type { NormalizedEvent } from './calendar-normalizer';
+import type { Doc } from '@/convex/_generated/dataModel';
+
+type RenderEvent = NormalizedEvent & {
+	color?: TailwindColors;
+	overlapCount?: number;
+	overlapIndex?: number;
+};
+type Meeting = Extract<
+	Doc<'events'>['event']['meetings'][number],
+	{ timeIsTBA: false }
+>;
+
+export function renderNormalizedEvents(
+	normalizedEvents: NormalizedEvent[],
+): RenderEvent[] {
+	const renderEventsMap = new Map<string, RenderEvent>();
+	const coloredEvents = Map.groupBy(
+		normalizedEvents as RenderEvent[],
+		(e) => e.sectionCode,
+	);
+	for (const [sectionCode, events] of coloredEvents) {
+		const color = getColor(sectionCode);
+		events.forEach((event) => {
+			const colorOverride = event.ownerId
+				? getColor(event.userId.slice(5))
+				: undefined;
+			renderEventsMap.set(`${event._id}-${event.dayOfWeek}`, {
+				color: colorOverride ?? color,
+				overlapCount: 1,
+				overlapIndex: 0,
+				...event,
+			});
+		});
+	}
+
+	const eventsByDay = Map.groupBy(normalizedEvents, (e) => e.dayOfWeek);
+	for (const [_, events] of eventsByDay) {
+		const points: {
+			id: string;
+			time: number;
+			type: 'start' | 'end';
+		}[] = events.flatMap((e) => [
+			{
+				id: `${e._id}-${e.dayOfWeek}`,
+				time: toMinutes(e.startTime),
+				type: 'start',
+			},
+			{
+				id: `${e._id}-${e.dayOfWeek}`,
+				time: toMinutes(e.endTime),
+				type: 'end',
+			},
+		]);
+		points.sort((a, b) =>
+			a.time !== b.time ? a.time - b.time : a.type === 'start' ? -1 : 1,
+		);
+		const active = new Map<string, number>();
+		const freeLanes: number[] = [];
+		let nextLane = 0;
+		let prevTime: number | null = null;
+		let clusterMax = 0;
+
+		for (const point of points) {
+			if (prevTime !== null && point.time > prevTime) {
+				clusterMax = Math.max(clusterMax, active.size);
+
+				for (const [id, lane] of active) {
+					const e = renderEventsMap.get(id)!;
+					e.overlapIndex = lane;
+					e.overlapCount = clusterMax;
+				}
+			}
+
+			if (point.type === 'start') {
+				const lane = freeLanes.pop() ?? nextLane++;
+				active.set(point.id, lane);
+			} else {
+				const lane = active.get(point.id);
+				if (lane !== undefined) {
+					freeLanes.push(lane);
+					active.delete(point.id);
+				}
+				if (active.size === 0) clusterMax = 0;
+			}
+
+			prevTime = point.time;
+		}
+	}
+	const renderedEvents = Array.from(renderEventsMap.values()).flat();
+	return renderedEvents;
+}
+
+function getColor(id: string): TailwindColors {
+	const colors: TailwindColors[] = [
+		'amber',
+		'blue',
+		'cyan',
+		'emerald',
+		'fuchsia',
+		'gray',
+		'green',
+		'indigo',
+		'lime',
+		'neutral',
+		'orange',
+		'pink',
+		'purple',
+		'red',
+		'rose',
+		'sky',
+		'slate',
+		'stone',
+		'teal',
+		'violet',
+		'yellow',
+		'zinc',
+	];
+	let hash = 0;
+	for (let i = 0; i < id.length; i++) {
+		hash = id.charCodeAt(i) + ((hash << 5) - hash);
+	}
+	return colors[Math.abs(hash) % colors.length];
+}
+
+function toMinutes(time: Meeting['startTime'] | Meeting['endTime']) {
+	return time.hour * 60 + time.minute;
+}

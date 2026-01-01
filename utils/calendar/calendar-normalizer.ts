@@ -1,9 +1,15 @@
 import type { Doc } from '@/convex/_generated/dataModel';
 
-type Day = 'M' | 'Tu' | 'W' | 'Th' | 'F' | 'Sa' | 'Su';
+type Day = 'M' | 'Tu' | 'W' | 'Th' | 'F';
 export type NormalizedEvent = Omit<Doc<'events'>, 'event'> &
 	Omit<Doc<'events'>['event'], 'meetings'> &
-	Omit<Doc<'events'>['event']['meetings'][number], 'days'> & { dayOfWeek: Day };
+	Omit<
+		Extract<Doc<'events'>['event']['meetings'][number], { timeIsTBA: false }>,
+		'days'
+	> & {
+		dayOfWeek: Day;
+		ownerId?: string;
+	};
 
 export function normalizeEvents(events: Doc<'events'>[]) {
 	const normalizedEvents: NormalizedEvent[] = [];
