@@ -73,7 +73,7 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
   }, []);
   const { tabs } = useTabContext();
 
-  const { calendarEvents, setCalendarEvents, removeCalendarEvent, activeTerm } =
+  const { localStorageEvents, activeTerm, setLocalStorageEvents } =
     useCalendarContext();
 
   const initialValues: SearchCourseType = {
@@ -109,8 +109,14 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
   }
 
   function sectionAdded(sectionCode: string) {
-    return calendarEvents.some(
-      (calendarEvent) => calendarEvent.sectionCode === sectionCode
+    const calendarName = activeTerm?.calendarName || '';
+    const calendarGroup = localStorageEvents.find(
+      (group) => group.calendarName === calendarName
+    );
+    return (
+      calendarGroup?.events.some(
+        (event) => event.sectionCode === sectionCode
+      ) ?? false
     );
   }
 
@@ -396,8 +402,46 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                               type="button"
                                               plain
                                               onClick={() => {
-                                                removeCalendarEvent(
-                                                  section.sectionCode
+                                                const calendarName =
+                                                  activeTerm?.calendarName ||
+                                                  '';
+                                                setLocalStorageEvents(
+                                                  (prev) => {
+                                                    const existingIndex =
+                                                      prev.findIndex(
+                                                        (group) =>
+                                                          group.calendarName ===
+                                                          calendarName
+                                                      );
+                                                    if (existingIndex >= 0) {
+                                                      const updatedEvents =
+                                                        prev[
+                                                          existingIndex
+                                                        ].events.filter(
+                                                          (event) =>
+                                                            event.sectionCode !==
+                                                            section.sectionCode
+                                                        );
+                                                      if (
+                                                        updatedEvents.length ===
+                                                        0
+                                                      ) {
+                                                        return prev.filter(
+                                                          (_, i) =>
+                                                            i !== existingIndex
+                                                        );
+                                                      }
+                                                      const updated = [...prev];
+                                                      updated[existingIndex] = {
+                                                        ...updated[
+                                                          existingIndex
+                                                        ],
+                                                        events: updatedEvents,
+                                                      };
+                                                      return updated;
+                                                    }
+                                                    return prev;
+                                                  }
                                                 );
                                               }}
                                             >
@@ -411,18 +455,45 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                                 const calendarName =
                                                   activeTerm?.calendarName ||
                                                   '';
-                                                const calendarEvent = {
+                                                const newEvent = {
                                                   ...section,
                                                   deptCode: course.deptCode,
                                                   courseNumber:
                                                     course.courseNumber,
                                                   deptName: department.deptName,
-                                                  calendarId: calendarName,
                                                 };
-                                                setCalendarEvents([
-                                                  ...calendarEvents,
-                                                  calendarEvent,
-                                                ]);
+                                                setLocalStorageEvents(
+                                                  (prev) => {
+                                                    const existingIndex =
+                                                      prev.findIndex(
+                                                        (group) =>
+                                                          group.calendarName ===
+                                                          calendarName
+                                                      );
+                                                    if (existingIndex >= 0) {
+                                                      const updated = [...prev];
+                                                      updated[existingIndex] = {
+                                                        ...updated[
+                                                          existingIndex
+                                                        ],
+                                                        events: [
+                                                          ...updated[
+                                                            existingIndex
+                                                          ].events,
+                                                          newEvent,
+                                                        ],
+                                                      };
+                                                      return updated;
+                                                    }
+                                                    return [
+                                                      ...prev,
+                                                      {
+                                                        calendarName,
+                                                        events: [newEvent],
+                                                      },
+                                                    ];
+                                                  }
+                                                );
                                               }}
                                             >
                                               <PlusIcon className="size-4" />
