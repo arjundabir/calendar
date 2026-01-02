@@ -472,44 +472,52 @@ export default function SearchForm({ websocTerms }: { websocTerms: Term[] }) {
                                         </div>
                                       </TableCell>
                                       <TableCell>
-                                        {section.meetings.map(
-                                          (meeting, meetingIndex) => {
-                                            if (meeting.timeIsTBA) {
+                                        <div>
+                                          {section.meetings.map(
+                                            (meeting, meetingIndex) => {
+                                              if (meeting.timeIsTBA) {
+                                                return (
+                                                  <Text
+                                                    key={`${meetingIndex}-${meeting.timeIsTBA}`}
+                                                    caption
+                                                  >
+                                                    TBA
+                                                  </Text>
+                                                );
+                                              }
+                                              // Create Date objects with the time (date doesn't matter)
+                                              const startDate = new Date();
+                                              startDate.setHours(
+                                                meeting.startTime.hour,
+                                                meeting.startTime.minute,
+                                                0,
+                                                0
+                                              );
+                                              const endDate = new Date();
+                                              endDate.setHours(
+                                                meeting.endTime.hour,
+                                                meeting.endTime.minute,
+                                                0,
+                                                0
+                                              );
                                               return (
                                                 <Text
-                                                  key={`${meetingIndex}-${meeting.timeIsTBA}`}
                                                   caption
+                                                  key={`${meetingIndex}-${meeting.timeIsTBA}`}
                                                 >
-                                                  TBA
+                                                  {meeting.days}&nbsp;
+                                                  <Strong>
+                                                    {format(
+                                                      startDate,
+                                                      'h:mm a'
+                                                    )}
+                                                    -{format(endDate, 'h:mm a')}
+                                                  </Strong>
                                                 </Text>
                                               );
                                             }
-                                            // Create Date objects with the time (date doesn't matter)
-                                            const startDate = new Date();
-                                            startDate.setHours(
-                                              meeting.startTime.hour,
-                                              meeting.startTime.minute,
-                                              0,
-                                              0
-                                            );
-                                            const endDate = new Date();
-                                            endDate.setHours(
-                                              meeting.endTime.hour,
-                                              meeting.endTime.minute,
-                                              0,
-                                              0
-                                            );
-                                            return (
-                                              <Strong
-                                                key={`${meetingIndex}-${meeting.timeIsTBA}`}
-                                                caption
-                                              >
-                                                {format(startDate, 'h:mm a')}-
-                                                {format(endDate, 'h:mm a')}
-                                              </Strong>
-                                            );
-                                          }
-                                        )}
+                                          )}
+                                        </div>
                                       </TableCell>
                                       <TableCell>
                                         <Text caption>
