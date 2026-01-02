@@ -2,7 +2,7 @@ import type { TailwindColors } from '@/components/calendar/calendar-event';
 import type { NormalizedEvent } from './calendar-normalizer';
 import type { Doc } from '@/convex/_generated/dataModel';
 
-type RenderEvent = NormalizedEvent & {
+export type RenderEvent = NormalizedEvent & {
 	color?: TailwindColors;
 	overlapCount?: number;
 	overlapIndex?: number;
@@ -12,7 +12,17 @@ type Meeting = Extract<
 	{ timeIsTBA: false }
 >;
 
-export function renderNormalizedEvents(
+export function renderEvents(normalizedEvents: NormalizedEvent[]) {
+	const classEvents = normalizedEvents.filter((e) => e.type === 'class');
+	const finalEvents = normalizedEvents.filter((e) => e.type === 'final');
+
+	return [
+		...renderNormalizedEvents(classEvents),
+		...renderNormalizedEvents(finalEvents),
+	];
+}
+
+function renderNormalizedEvents(
 	normalizedEvents: NormalizedEvent[],
 ): RenderEvent[] {
 	const renderEventsMap = new Map<string, RenderEvent>();

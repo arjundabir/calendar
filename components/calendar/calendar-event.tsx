@@ -15,7 +15,7 @@ import {
   PopoverDivider,
   PopoverPanel,
 } from '../ui/popover';
-import type { CalendarEvents } from './calendar-provider';
+import type { RenderEvent } from '@/utils/calendar/calendar-renderer';
 
 function CalendarList({ children }: { children: ReactNode }) {
   return (
@@ -227,23 +227,6 @@ const colorClasses: Record<
     timeHover: 'group-hover:text-stone-700',
   },
 };
-export interface CalendarEventType {
-  // TODO @arjundabir: make sure to change from using T to using Tu for tuesdays
-  dayOfWeek: 'M' | 'T' | 'Tu' | 'W' | 'Th' | 'F';
-  startTime: TimeType;
-  endTime: TimeType;
-  color: TailwindColors;
-  deptCode: string;
-  courseNumber: string;
-  sectionType: string;
-  sectionCode: string;
-  finalExam: CalendarEvents['finalExam'];
-  locations: string[];
-  instructors: string[];
-  overlapCount: number;
-  overlapIndex: number;
-}
-
 function CalendarEvent({
   dayOfWeek,
   startTime,
@@ -254,11 +237,11 @@ function CalendarEvent({
   sectionType,
   sectionCode,
   finalExam,
-  locations,
+  bldg,
   instructors,
   overlapCount,
   overlapIndex,
-}: CalendarEventType) {
+}: RenderEvent) {
   // Validate startTime and endTime using hourSchema and minuteSchema
   hourSchema.parse(startTime.hour);
   minuteSchema.parse(startTime.minute);
@@ -275,11 +258,10 @@ function CalendarEvent({
   };
   const formatTime = (time: number) => (time % 12 === 0 ? 12 : time % 12);
   const meridiem = (hour: number) => (hour >= 12 ? 'PM' : 'AM');
-  const formatDayOfWeek = (day: CalendarEventType['dayOfWeek']) => {
+  const formatDayOfWeek = (day: RenderEvent['dayOfWeek']) => {
     switch (day) {
       case 'M':
         return 'Monday';
-      case 'T':
       case 'Tu':
         return 'Tuesday';
       case 'W':
@@ -300,7 +282,7 @@ function CalendarEvent({
 
   // Pre-written class strings so Tailwind can detect them during static analysis
 
-  const colors = colorClasses[color];
+  const colors = colorClasses[color!];
 
   return (
     <li
@@ -327,7 +309,7 @@ function CalendarEvent({
               {startTime.minute.toString().padStart(2, '0')}{' '}
               {meridiem(startTime.hour)}
             </time>
-            ,&nbsp;<span>{locations?.map((location) => location)}</span>
+            ,&nbsp;<span>{bldg?.map((bldg) => bldg)}</span>
           </p>
         </PopoverButton>
         <PopoverPanel anchor="left" className="w-96!">
@@ -352,7 +334,7 @@ function CalendarEvent({
           </div>
           <div className="my-4 flex flex-col gap-y-1">
             <Button plain className="justify-start">
-              <MapPinIcon /> {locations?.map((location) => location)}
+              <MapPinIcon /> {bldg?.map((bldg) => bldg)}
             </Button>
             <Button plain className="justify-start">
               <ClipboardIcon />

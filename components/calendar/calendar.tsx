@@ -2,14 +2,19 @@
 
 import { CalendarEvent, CalendarList } from './calendar-event';
 import { normalizeEvents } from '@/utils/calendar/calendar-normalizer';
-import { renderNormalizedEvents } from '@/utils/calendar/calendar-renderer';
+import { renderEvents as renderNormalizedEvents } from '@/utils/calendar/calendar-renderer';
 import { useCalendarEvent } from '@/hooks/use-calendar-effect';
+import { useCalendarContext } from './calendar-provider';
 
 export default function Calendar() {
+  const { isFinalsSchedule } = useCalendarContext();
   const events = useCalendarEvent();
   const renderEvents = events
     ? renderNormalizedEvents(normalizeEvents(events))
     : null;
+  const classEvents = renderEvents?.filter((re) => re.type === 'class');
+  const finalsEvents = renderEvents?.filter((re) => re.type === 'final');
+  const displayEvents = isFinalsSchedule ? finalsEvents : classEvents;
   return (
     <div className="flex h-full flex-col">
       <div className="isolate flex flex-auto flex-col bg-white">
@@ -83,25 +88,9 @@ export default function Calendar() {
 
               {/* Events */}
               <CalendarList>
-                {renderEvents?.map((re) => (
-                  <CalendarEvent
-                    key={`${re._id}-${re.dayOfWeek}`}
-                    dayOfWeek={re.dayOfWeek}
-                    startTime={re.startTime}
-                    endTime={re.endTime}
-                    color={re.color!}
-                    deptCode={re.deptCode}
-                    courseNumber={re.courseNumber}
-                    sectionType={re.sectionType}
-                    sectionCode={re.sectionCode}
-                    finalExam={re.finalExam}
-                    locations={re.bldg}
-                    instructors={re.instructors}
-                    overlapCount={re.overlapCount!}
-                    overlapIndex={re.overlapIndex!}
-                  />
+                {displayEvents?.map((re) => (
+                  <CalendarEvent key={`${re._id}-${re.dayOfWeek}`} {...re} />
                 ))}
-                {/* TODO (@arjundabir): implement finals schedule handling */}
               </CalendarList>
             </div>
           </div>

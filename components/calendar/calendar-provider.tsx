@@ -56,8 +56,6 @@ type LocalStorageEvent = {
   events: Event[];
 };
 
-// TODO (@arjundabir): remove calendarEvents and events and just keep localStorageEvents
-
 type CalendarContextType = {
   localStorageEvents: LocalStorageEvent[] | [];
   setLocalStorageEvents: Dispatch<SetStateAction<LocalStorageEvent[]>>;
