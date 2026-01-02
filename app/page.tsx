@@ -10,7 +10,7 @@ import { getLatestSocAvailable } from '@/lib/calendar/terms-helper';
 import { getWebSocTerms, listAllCalendars } from './actions';
 
 export default async function Home() {
-  const [websocTerms, allCalendars, preloadedTerms] = await Promise.all([
+  const [websocTerms, allCalendars, preloadedCalendars] = await Promise.all([
     getWebSocTerms(),
     listAllCalendars(),
     preloadQuery(api.calendars.queries.getCalendars),
@@ -19,7 +19,7 @@ export default async function Home() {
   return (
     <CalendarProvider
       latestTerm={getLatestSocAvailable(allCalendars)}
-      preloadedTerms={preloadedTerms}
+      preloadedCalendars={preloadedCalendars}
     >
       <div className="grid grid-cols-2 h-[calc(100svh-56px)]">
         <section className="border-r border-gray-100">

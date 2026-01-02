@@ -11,15 +11,14 @@ import {
   usePreloadedQuery,
   useQuery,
 } from 'convex/react';
-import type { ReactNode } from 'react';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useLocalStorage } from 'usehooks-ts';
 import { api } from '@/convex/_generated/api';
 import type { Doc, Id } from '@/convex/_generated/dataModel';
 import { useStoreUserEffect } from '@/hooks/useStoreUserEffect';
 import type { paths } from '@/types/anteater-api-types';
-import { Checkbox, CheckboxField, CheckboxGroup } from '../ui/checkbox';
-import { Description } from '../ui/fieldset';
+import { Checkbox } from '../ui/checkbox';
 import { Input } from '../ui/input';
 import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from '../ui/navbar';
 import ShareModal from '../share-modal';
@@ -32,7 +31,6 @@ import {
   SidebarSection,
 } from '../ui/sidebar';
 
-// Navigate through the nested websoc response structure to get the correct types
 type WebSocData =
   paths['/v2/rest/websoc']['get']['responses'][200]['content']['application/json']['data'];
 type WebSocSection =
@@ -59,17 +57,14 @@ type LocalStorageEvent = {
 };
 
 type CalendarContextType = {
-  calendarEvents: CalendarEvents[] | [];
-  setCalendarEvents: (events: CalendarEvents[] | []) => void;
-  removeCalendarEvent: (sectionCode: string) => void;
+  localStorageEvents: LocalStorageEvent[] | [];
+  setLocalStorageEvents: Dispatch<SetStateAction<LocalStorageEvent[]>>;
   activeTerm: (Doc<'calendars'> | LocalCalendar) | undefined;
   isFinalsSchedule: boolean;
 };
-
 const CalendarContext = createContext<CalendarContextType | undefined>(
   undefined
 );
-
 export function useCalendarContext() {
   const context = useContext(CalendarContext);
   if (context === undefined) {
@@ -83,11 +78,11 @@ export function useCalendarContext() {
 export function CalendarProvider({
   children,
   latestTerm,
-  preloadedTerms,
+  preloadedCalendars,
 }: {
   children: ReactNode;
   latestTerm: Calendar;
-  preloadedTerms: Preloaded<typeof api.calendars.queries.getCalendars>;
+  preloadedCalendars: Preloaded<typeof api.calendars.queries.getCalendars>;
 }) {
   const [localStorageEvents, setLocalStorageEvents] = useLocalStorage<
     LocalStorageEvent[]
@@ -99,116 +94,10 @@ export function CalendarProvider({
   const [isDialogOpen, setDialogOpen] = useState<boolean>(false);
 
   const { isAuthenticated } = useStoreUserEffect();
-  const calendars = usePreloadedQuery(preloadedTerms);
+  const calendars = usePreloadedQuery(preloadedCalendars);
   const activeTerm = isAuthenticated
     ? calendars?.find((calendar) => calendar.isActive)
     : calendarsLocalStorage.find((calendar) => calendar.isActive);
-
-  // Helper: Convert EventValidatorType to CalendarEvents by adding calendarId
-  function eventToCalendarEvent(
-    event: Event,
-    calendarName: string
-  ): CalendarEvents {
-    return {
-      ...event,
-      calendarId: calendarName,
-    } as CalendarEvents;
-  }
-
-  // Helper: Convert CalendarEvents to EventValidatorType by removing calendarId
-  function calendarEventToEvent(calendarEvent: CalendarEvents): Event {
-    const { ...event } = calendarEvent;
-    return event as Event;
-  }
-
-  // Helper: Get events for a specific calendarName
-  function getEventsForCalendar(calendarName: string): Event[] {
-    const calendarGroup = localStorageEvents.find(
-      (group) => group.calendarName === calendarName
-    );
-    return calendarGroup?.events ?? [];
-  }
-
-  // Helper: Flatten grouped structure to CalendarEvents array filtered by calendarName
-  function getFlattenedEvents(calendarName?: string): CalendarEvents[] {
-    if (!calendarName) return [];
-    const events = getEventsForCalendar(calendarName);
-    return events.map((event) => eventToCalendarEvent(event, calendarName));
-  }
-
-  // Get flattened events for active term
-  const calendarEvents = getFlattenedEvents(activeTerm?.calendarName);
-
-  // Helper: Remove event from correct calendar group
-  function removeEventFromCalendar(
-    sectionCode: string,
-    calendarName: string
-  ): void {
-    const currentEvents = [...localStorageEvents];
-    const calendarIndex = currentEvents.findIndex(
-      (group) => group.calendarName === calendarName
-    );
-
-    if (calendarIndex >= 0) {
-      const updatedEvents = currentEvents[calendarIndex].events.filter(
-        (event) => event.sectionCode !== sectionCode
-      );
-
-      if (updatedEvents.length === 0) {
-        // Remove calendar group if no events left
-        currentEvents.splice(calendarIndex, 1);
-      } else {
-        currentEvents[calendarIndex] = {
-          ...currentEvents[calendarIndex],
-          events: updatedEvents,
-        };
-      }
-
-      setLocalStorageEvents(currentEvents);
-    }
-  }
-
-  // setCalendarEvents: accepts CalendarEvents[] and stores them grouped by calendarName
-  function setCalendarEvents(events: CalendarEvents[]): void {
-    if (!activeTerm?.calendarName) return;
-
-    // Group events by calendarName (though they should all be for activeTerm)
-    const grouped: Record<string, Event[]> = {};
-    events.forEach((event) => {
-      const calendarName = event.calendarId || activeTerm.calendarName;
-      if (!grouped[calendarName]) {
-        grouped[calendarName] = [];
-      }
-      grouped[calendarName].push(calendarEventToEvent(event));
-    });
-
-    // Update localStorage
-    const currentEvents = [...localStorageEvents];
-    Object.entries(grouped).forEach(([calendarName, eventList]) => {
-      const calendarIndex = currentEvents.findIndex(
-        (group) => group.calendarName === calendarName
-      );
-
-      if (calendarIndex >= 0) {
-        currentEvents[calendarIndex] = {
-          calendarName,
-          events: eventList,
-        };
-      } else {
-        currentEvents.push({
-          calendarName,
-          events: eventList,
-        });
-      }
-    });
-
-    setLocalStorageEvents(currentEvents);
-  }
-
-  function removeCalendarEvent(sectionCode: string): void {
-    if (!activeTerm?.calendarName) return;
-    removeEventFromCalendar(sectionCode, activeTerm.calendarName);
-  }
 
   const [isCreatingNewCalendar, setIsCreatingNewCalendar] =
     useState<boolean>(false);
@@ -319,9 +208,8 @@ export function CalendarProvider({
   return (
     <CalendarContext.Provider
       value={{
-        calendarEvents,
-        setCalendarEvents,
-        removeCalendarEvent,
+        localStorageEvents,
+        setLocalStorageEvents,
         activeTerm,
         isFinalsSchedule,
       }}
@@ -432,15 +320,13 @@ export function CalendarProvider({
                         })
                       }
                     >
-                      <CheckboxGroup>
-                        <CheckboxField>
-                          <Checkbox checked={show} />
-                          <SidebarLabel>{calendar.calendarName}</SidebarLabel>
-                          <Description className="font-normal!">
-                            by {owner.name}
-                          </Description>
-                        </CheckboxField>
-                      </CheckboxGroup>
+                      <Checkbox checked={show} />
+                      <div className="flex flex-col">
+                        <SidebarLabel>{calendar.calendarName}</SidebarLabel>
+                        <span className="text-xs text-zinc-500">
+                          by {owner.name}
+                        </span>
+                      </div>
                     </SidebarItem>
                   ))}
                 </SidebarSection>

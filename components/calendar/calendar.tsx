@@ -1,59 +1,20 @@
 'use client';
 
-import { Authenticated, Unauthenticated, useQuery } from 'convex/react';
-import { api } from '@/convex/_generated/api';
-import {
-  transformCalendarEvents,
-  transformFinalsEvents,
-} from '@/lib/calendar/calendar-events-helper';
-import { CalendarList } from './calendar-event';
+import { CalendarEvent, CalendarList } from './calendar-event';
+import { normalizeEvents } from '@/utils/calendar/calendar-normalizer';
+import { renderEvents as renderNormalizedEvents } from '@/utils/calendar/calendar-renderer';
+import { useCalendarEvent } from '@/hooks/use-calendar-effect';
 import { useCalendarContext } from './calendar-provider';
 
 export default function Calendar() {
-  const { calendarEvents, isFinalsSchedule } = useCalendarContext();
-  const dbCalendarEvents = useQuery(api.events.queries.getUserEvents);
-  const sharedCalendarEvents = useQuery(
-    api.shares.queries.getSharedCalendarEvents
-  );
-
-  // Extract nested event objects and flatten structure for compatibility
-  const dbCalendarEventsNoUserId =
-    dbCalendarEvents?.map(({ userId: _, calendarId, event, ...rest }) => ({
-      ...event,
-      calendarId: calendarId as string,
-      ...rest,
-    })) ?? [];
-
-  // Build owner map from shared calendar events (maps calendarId to ownerId)
-  const ownerMap = new Map<string, string>();
-  const sharedEventsFlattened =
-    sharedCalendarEvents?.map(
-      ({ userId: _, calendarId, event, ownerId, ...rest }) => {
-        if (ownerId) {
-          ownerMap.set(calendarId as string, ownerId as string);
-        }
-        return {
-          ...event,
-          calendarId: calendarId as string,
-          ...rest,
-        };
-      }
-    ) ?? [];
-
-  const transformedEvents = transformCalendarEvents(calendarEvents);
-  const transformedDbEvents = transformCalendarEvents(
-    [...dbCalendarEventsNoUserId, ...sharedEventsFlattened],
-    undefined,
-    ownerMap
-  );
-
-  const transformedFinalsEvents = transformFinalsEvents(calendarEvents);
-  const transformedDbFinalsEvents = transformFinalsEvents(
-    [...dbCalendarEventsNoUserId, ...sharedEventsFlattened],
-    undefined,
-    ownerMap
-  );
-
+  const { isFinalsSchedule } = useCalendarContext();
+  const events = useCalendarEvent();
+  const renderEvents = events
+    ? renderNormalizedEvents(normalizeEvents(events))
+    : null;
+  const classEvents = renderEvents?.filter((re) => re.type === 'class');
+  const finalsEvents = renderEvents?.filter((re) => re.type === 'final');
+  const displayEvents = isFinalsSchedule ? finalsEvents : classEvents;
   return (
     <div className="flex h-full flex-col">
       <div className="isolate flex flex-auto flex-col bg-white">
@@ -127,16 +88,9 @@ export default function Calendar() {
 
               {/* Events */}
               <CalendarList>
-                <Authenticated>
-                  {isFinalsSchedule
-                    ? transformedDbFinalsEvents
-                    : transformedDbEvents}
-                </Authenticated>
-                <Unauthenticated>
-                  {isFinalsSchedule
-                    ? transformedFinalsEvents
-                    : transformedEvents}
-                </Unauthenticated>
+                {displayEvents?.map((re) => (
+                  <CalendarEvent key={`${re._id}-${re.dayOfWeek}`} {...re} />
+                ))}
               </CalendarList>
             </div>
           </div>
